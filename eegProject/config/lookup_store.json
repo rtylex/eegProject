@@ -1,0 +1,4 @@
+{
+  "ExperimentTypes": ["Egitim", "Rahatlama", "Muzik"],
+  "TimeLabels": ["Bazal", "30dk", "1saat", "2saat"]
+}

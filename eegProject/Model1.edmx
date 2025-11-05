@@ -1,0 +1,738 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="eegDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="AnalizSonucu">
+          <Key>
+            <PropertyRef Name="AnalizID" />
+          </Key>
+          <Property Name="AnalizID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OturumID" Type="int" />
+          <Property Name="AnalizTipi" Type="nvarchar" MaxLength="100" />
+          <Property Name="Metodoloji" Type="nvarchar" MaxLength="200" />
+          <Property Name="MetricsJSON" Type="nvarchar(max)" />
+          <Property Name="Summary" Type="nvarchar(max)" />
+          <Property Name="AnalizTarihi" Type="datetime2" Precision="7" Nullable="false" />
+        </EntityType>
+        <EntityType Name="AuditLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Tarih" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" />
+          <Property Name="KullaniciAdi" Type="nvarchar" MaxLength="100" />
+          <Property Name="Islem" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Detay" Type="nvarchar(max)" />
+          <Property Name="Seviye" Type="nvarchar" MaxLength="20" Nullable="false" />
+        </EntityType>
+        <EntityType Name="DeneyTuru">
+          <Key>
+            <PropertyRef Name="DeneyTuruID" />
+          </Key>
+          <Property Name="DeneyTuruID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="TurAdi" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Aciklama" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aktif" Type="bit" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="EEGVerisi">
+          <Key>
+            <PropertyRef Name="EEGID" />
+          </Key>
+          <Property Name="EEGID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OturumID" Type="int" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" Nullable="false" />
+          <Property Name="Delta" Type="float" />
+          <Property Name="Theta" Type="float" />
+          <Property Name="LowAlpha" Type="float" />
+          <Property Name="HighAlpha" Type="float" />
+          <Property Name="LowBeta" Type="float" />
+          <Property Name="HighBeta" Type="float" />
+          <Property Name="LowGamma" Type="float" />
+          <Property Name="HighGamma" Type="float" />
+          <Property Name="BlinkStrength" Type="int" />
+          <Property Name="KayitZamani" Type="datetime2" Precision="7" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Kullanici">
+          <Key>
+            <PropertyRef Name="KullaniciID" />
+          </Key>
+          <Property Name="KullaniciID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="AdSoyad" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Email" Type="nvarchar" MaxLength="100" />
+          <Property Name="SifreHash" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="KayitTarihi" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="Rol" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="Notlar" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="KullaniciModulYetkisi">
+          <Key>
+            <PropertyRef Name="YetkiID" />
+          </Key>
+          <Property Name="YetkiID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" Nullable="false" />
+          <Property Name="ModulAdi" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="AktifMi" Type="bit" Nullable="false" />
+          <Property Name="TanimTarihi" Type="datetime" Nullable="false" />
+          <Property Name="TanimlayanYoneticiID" Type="int" />
+        </EntityType>
+        <EntityType Name="Oturum">
+          <Key>
+            <PropertyRef Name="OturumID" />
+          </Key>
+          <Property Name="OturumID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" Nullable="false" />
+          <Property Name="ZamanEtiketi" Type="nvarchar" MaxLength="50" />
+          <Property Name="DeneyTuru" Type="nvarchar" MaxLength="100" />
+          <Property Name="KayitBaslangic" Type="datetime2" Precision="7" />
+          <Property Name="KayitBitis" Type="datetime2" Precision="7" />
+          <Property Name="Notlar" Type="nvarchar(max)" />
+          <Property Name="DeneyTuruID" Type="int" />
+          <Property Name="ZamanEtiketiID" Type="int" />
+        </EntityType>
+        <EntityType Name="SinavSonucu">
+          <Key>
+            <PropertyRef Name="SinavSonucuID" />
+          </Key>
+          <Property Name="SinavSonucuID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OturumID" Type="int" Nullable="false" />
+          <Property Name="SinavTuru" Type="nvarchar" MaxLength="100" />
+          <Property Name="ToplamSoru" Type="int" Nullable="false" />
+          <Property Name="DogruSayisi" Type="int" Nullable="false" />
+          <Property Name="YanlisSayisi" Type="int" Nullable="false" />
+          <Property Name="BaslamaTarihi" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="BitisTarihi" Type="datetime2" Precision="7" />
+          <Property Name="Sure" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="Yonetici">
+          <Key>
+            <PropertyRef Name="YoneticiID" />
+          </Key>
+          <Property Name="YoneticiID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KullaniciAdi" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Email" Type="nvarchar" MaxLength="100" />
+          <Property Name="SifreHash" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="YetkiSeviyesi" Type="nvarchar" MaxLength="20" />
+          <Property Name="KayitTarihi" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="AnalizModuluAktifMi" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="ZamanEtiketi">
+          <Key>
+            <PropertyRef Name="ZamanEtiketiID" />
+          </Key>
+          <Property Name="ZamanEtiketiID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="EtiketAdi" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Aciklama" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aktif" Type="bit" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="datetime" Nullable="false" />
+        </EntityType>
+        <Association Name="FK__Kullanici__Kulla__66603565">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="KullaniciModulYetkisi" Type="Self.KullaniciModulYetkisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="KullaniciModulYetkisi">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__SinavSonu__Oturu__60A75C0F">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SinavSonucu" Type="Self.SinavSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="SinavSonucu">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Analiz_Oturum">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="AnalizSonucu" Type="Self.AnalizSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="AnalizSonucu">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_EEG_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="EEGVerisi" Type="Self.EEGVerisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="EEGVerisi">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_EEG_Oturum">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="EEGVerisi" Type="Self.EEGVerisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="EEGVerisi">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Oturum_DeneyTuru">
+          <End Role="DeneyTuru" Type="Self.DeneyTuru" Multiplicity="0..1" />
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DeneyTuru">
+              <PropertyRef Name="DeneyTuruID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="DeneyTuruID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Oturum_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Oturum_ZamanEtiketi">
+          <End Role="ZamanEtiketi" Type="Self.ZamanEtiketi" Multiplicity="0..1" />
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ZamanEtiketi">
+              <PropertyRef Name="ZamanEtiketiID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="ZamanEtiketiID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="eegDBModelStoreContainer">
+          <EntitySet Name="AnalizSonucu" EntityType="Self.AnalizSonucu" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="AuditLog" EntityType="Self.AuditLog" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="DeneyTuru" EntityType="Self.DeneyTuru" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="EEGVerisi" EntityType="Self.EEGVerisi" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Kullanici" EntityType="Self.Kullanici" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="KullaniciModulYetkisi" EntityType="Self.KullaniciModulYetkisi" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Oturum" EntityType="Self.Oturum" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SinavSonucu" EntityType="Self.SinavSonucu" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Yonetici" EntityType="Self.Yonetici" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ZamanEtiketi" EntityType="Self.ZamanEtiketi" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK__Kullanici__Kulla__66603565" Association="Self.FK__Kullanici__Kulla__66603565">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="KullaniciModulYetkisi" EntitySet="KullaniciModulYetkisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK__SinavSonu__Oturu__60A75C0F" Association="Self.FK__SinavSonu__Oturu__60A75C0F">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Analiz_Oturum" Association="Self.FK_Analiz_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="AnalizSonucu" EntitySet="AnalizSonucu" />
+          </AssociationSet>
+          <AssociationSet Name="FK_EEG_Kullanici" Association="Self.FK_EEG_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="EEGVerisi" EntitySet="EEGVerisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK_EEG_Oturum" Association="Self.FK_EEG_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="EEGVerisi" EntitySet="EEGVerisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Oturum_DeneyTuru" Association="Self.FK_Oturum_DeneyTuru">
+            <End Role="DeneyTuru" EntitySet="DeneyTuru" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Oturum_Kullanici" Association="Self.FK_Oturum_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Oturum_ZamanEtiketi" Association="Self.FK_Oturum_ZamanEtiketi">
+            <End Role="ZamanEtiketi" EntitySet="ZamanEtiketi" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="eegDBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="AnalizSonucu">
+          <Key>
+            <PropertyRef Name="AnalizID" />
+          </Key>
+          <Property Name="AnalizID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OturumID" Type="Int32" />
+          <Property Name="AnalizTipi" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Metodoloji" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="MetricsJSON" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Summary" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="AnalizTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <NavigationProperty Name="Oturum" Relationship="Self.FK_Analiz_Oturum" FromRole="AnalizSonucu" ToRole="Oturum" />
+        </EntityType>
+        <EntityType Name="EEGVerisi">
+          <Key>
+            <PropertyRef Name="EEGID" />
+          </Key>
+          <Property Name="EEGID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OturumID" Type="Int32" Nullable="false" />
+          <Property Name="KullaniciID" Type="Int32" Nullable="false" />
+          <Property Name="Delta" Type="Double" />
+          <Property Name="Theta" Type="Double" />
+          <Property Name="LowAlpha" Type="Double" />
+          <Property Name="HighAlpha" Type="Double" />
+          <Property Name="LowBeta" Type="Double" />
+          <Property Name="HighBeta" Type="Double" />
+          <Property Name="LowGamma" Type="Double" />
+          <Property Name="HighGamma" Type="Double" />
+          <Property Name="BlinkStrength" Type="Int32" />
+          <Property Name="KayitZamani" Type="DateTime" Nullable="false" Precision="7" />
+          <NavigationProperty Name="Kullanici" Relationship="Self.FK_EEG_Kullanici" FromRole="EEGVerisi" ToRole="Kullanici" />
+          <NavigationProperty Name="Oturum" Relationship="Self.FK_EEG_Oturum" FromRole="EEGVerisi" ToRole="Oturum" />
+        </EntityType>
+        <EntityType Name="Kullanici">
+          <Key>
+            <PropertyRef Name="KullaniciID" />
+          </Key>
+          <Property Name="KullaniciID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="AdSoyad" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Email" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="SifreHash" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="KayitTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="Rol" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="EEGVerisi" Relationship="Self.FK_EEG_Kullanici" FromRole="Kullanici" ToRole="EEGVerisi" />
+          <NavigationProperty Name="Oturum" Relationship="Self.FK_Oturum_Kullanici" FromRole="Kullanici" ToRole="Oturum" />
+          <Property Name="Notlar" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="KullaniciModulYetkisi" Relationship="eegDBModel.FK__Kullanici__Kulla__66603565" FromRole="Kullanici" ToRole="KullaniciModulYetkisi" />
+        </EntityType>
+        <EntityType Name="Oturum">
+          <Key>
+            <PropertyRef Name="OturumID" />
+          </Key>
+          <Property Name="OturumID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KullaniciID" Type="Int32" Nullable="false" />
+          <Property Name="ZamanEtiketi" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="DeneyTuru" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="KayitBaslangic" Type="DateTime" Precision="7" />
+          <Property Name="KayitBitis" Type="DateTime" Precision="7" />
+          <Property Name="Notlar" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="AnalizSonucu" Relationship="Self.FK_Analiz_Oturum" FromRole="Oturum" ToRole="AnalizSonucu" />
+          <NavigationProperty Name="EEGVerisi" Relationship="Self.FK_EEG_Oturum" FromRole="Oturum" ToRole="EEGVerisi" />
+          <NavigationProperty Name="Kullanici" Relationship="Self.FK_Oturum_Kullanici" FromRole="Oturum" ToRole="Kullanici" />
+          <NavigationProperty Name="SinavSonucu" Relationship="eegDBModel.FK__SinavSonu__Oturu__60A75C0F" FromRole="Oturum" ToRole="SinavSonucu" />
+          <Property Name="DeneyTuruID" Type="Int32" />
+          <Property Name="ZamanEtiketiID" Type="Int32" />
+          <NavigationProperty Name="DeneyTuru1" Relationship="eegDBModel.FK_Oturum_DeneyTuru" FromRole="Oturum" ToRole="DeneyTuru" />
+          <NavigationProperty Name="ZamanEtiketi1" Relationship="eegDBModel.FK_Oturum_ZamanEtiketi" FromRole="Oturum" ToRole="ZamanEtiketi" />
+        </EntityType>
+        <EntityType Name="Yonetici">
+          <Key>
+            <PropertyRef Name="YoneticiID" />
+          </Key>
+          <Property Name="YoneticiID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KullaniciAdi" Type="String" MaxLength="100" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Email" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="SifreHash" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="YetkiSeviyesi" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="KayitTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="AnalizModuluAktifMi" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_Analiz_Oturum">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="0..1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="AnalizSonucu" Type="Self.AnalizSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="AnalizSonucu">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_EEG_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="EEGVerisi" Type="Self.EEGVerisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="EEGVerisi">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_EEG_Oturum">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="EEGVerisi" Type="Self.EEGVerisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="EEGVerisi">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Oturum_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="eegDBEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="AnalizSonucu" EntityType="Self.AnalizSonucu" />
+          <EntitySet Name="EEGVerisi" EntityType="Self.EEGVerisi" />
+          <EntitySet Name="Kullanici" EntityType="Self.Kullanici" />
+          <EntitySet Name="Oturum" EntityType="Self.Oturum" />
+          <EntitySet Name="Yonetici" EntityType="Self.Yonetici" />
+          <AssociationSet Name="FK_Analiz_Oturum" Association="Self.FK_Analiz_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="AnalizSonucu" EntitySet="AnalizSonucu" />
+          </AssociationSet>
+          <AssociationSet Name="FK_EEG_Kullanici" Association="Self.FK_EEG_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="EEGVerisi" EntitySet="EEGVerisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK_EEG_Oturum" Association="Self.FK_EEG_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="EEGVerisi" EntitySet="EEGVerisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Oturum_Kullanici" Association="Self.FK_Oturum_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+          <EntitySet Name="AuditLog" EntityType="eegDBModel.AuditLog" />
+          <EntitySet Name="SinavSonucu" EntityType="eegDBModel.SinavSonucu" />
+          <AssociationSet Name="FK__SinavSonu__Oturu__60A75C0F" Association="eegDBModel.FK__SinavSonu__Oturu__60A75C0F">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+          </AssociationSet>
+          <EntitySet Name="KullaniciModulYetkisi" EntityType="eegDBModel.KullaniciModulYetkisi" />
+          <AssociationSet Name="FK__Kullanici__Kulla__66603565" Association="eegDBModel.FK__Kullanici__Kulla__66603565">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="KullaniciModulYetkisi" EntitySet="KullaniciModulYetkisi" />
+          </AssociationSet>
+          <EntitySet Name="DeneyTuru" EntityType="eegDBModel.DeneyTuru" />
+          <EntitySet Name="ZamanEtiketi" EntityType="eegDBModel.ZamanEtiketi" />
+          <AssociationSet Name="FK_Oturum_DeneyTuru" Association="eegDBModel.FK_Oturum_DeneyTuru">
+            <End Role="DeneyTuru" EntitySet="DeneyTuru" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Oturum_ZamanEtiketi" Association="eegDBModel.FK_Oturum_ZamanEtiketi">
+            <End Role="ZamanEtiketi" EntitySet="ZamanEtiketi" />
+            <End Role="Oturum" EntitySet="Oturum" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="AuditLog">
+          <Key>
+            <PropertyRef Name="LogID" />
+          </Key>
+          <Property Name="LogID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Tarih" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="KullaniciID" Type="Int32" />
+          <Property Name="KullaniciAdi" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Islem" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Detay" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Seviye" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="SinavSonucu">
+          <Key>
+            <PropertyRef Name="SinavSonucuID" />
+          </Key>
+          <Property Name="SinavSonucuID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OturumID" Type="Int32" Nullable="false" />
+          <Property Name="SinavTuru" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="ToplamSoru" Type="Int32" Nullable="false" />
+          <Property Name="DogruSayisi" Type="Int32" Nullable="false" />
+          <Property Name="YanlisSayisi" Type="Int32" Nullable="false" />
+          <Property Name="BaslamaTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="BitisTarihi" Type="DateTime" Precision="7" />
+          <Property Name="Sure" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Oturum" Relationship="eegDBModel.FK__SinavSonu__Oturu__60A75C0F" FromRole="SinavSonucu" ToRole="Oturum" />
+        </EntityType>
+        <Association Name="FK__SinavSonu__Oturu__60A75C0F">
+          <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="eegDBModel.SinavSonucu" Role="SinavSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="SinavSonucu">
+              <PropertyRef Name="OturumID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="KullaniciModulYetkisi">
+          <Key>
+            <PropertyRef Name="YetkiID" />
+          </Key>
+          <Property Name="YetkiID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KullaniciID" Type="Int32" Nullable="false" />
+          <Property Name="ModulAdi" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="AktifMi" Type="Boolean" Nullable="false" />
+          <Property Name="TanimTarihi" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="TanimlayanYoneticiID" Type="Int32" />
+          <NavigationProperty Name="Kullanici" Relationship="eegDBModel.FK__Kullanici__Kulla__66603565" FromRole="KullaniciModulYetkisi" ToRole="Kullanici" />
+        </EntityType>
+        <Association Name="FK__Kullanici__Kulla__66603565">
+          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="1" />
+          <End Type="eegDBModel.KullaniciModulYetkisi" Role="KullaniciModulYetkisi" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="KullaniciModulYetkisi">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityType Name="DeneyTuru">
+          <Key>
+            <PropertyRef Name="DeneyTuruID" />
+          </Key>
+          <Property Name="DeneyTuruID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="TurAdi" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Aciklama" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aktif" Type="Boolean" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Oturum" Relationship="eegDBModel.FK_Oturum_DeneyTuru" FromRole="DeneyTuru" ToRole="Oturum" />
+        </EntityType>
+        <EntityType Name="ZamanEtiketi">
+          <Key>
+            <PropertyRef Name="ZamanEtiketiID" />
+          </Key>
+          <Property Name="ZamanEtiketiID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="EtiketAdi" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Aciklama" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aktif" Type="Boolean" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Oturum" Relationship="eegDBModel.FK_Oturum_ZamanEtiketi" FromRole="ZamanEtiketi" ToRole="Oturum" />
+        </EntityType>
+        <Association Name="FK_Oturum_DeneyTuru">
+          <End Type="eegDBModel.DeneyTuru" Role="DeneyTuru" Multiplicity="0..1" />
+          <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DeneyTuru">
+              <PropertyRef Name="DeneyTuruID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="DeneyTuruID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Oturum_ZamanEtiketi">
+          <End Type="eegDBModel.ZamanEtiketi" Role="ZamanEtiketi" Multiplicity="0..1" />
+          <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="ZamanEtiketi">
+              <PropertyRef Name="ZamanEtiketiID" />
+            </Principal>
+            <Dependent Role="Oturum">
+              <PropertyRef Name="ZamanEtiketiID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="eegDBModelStoreContainer" CdmEntityContainer="eegDBEntities">
+          <EntitySetMapping Name="AnalizSonucu">
+            <EntityTypeMapping TypeName="eegDBModel.AnalizSonucu">
+              <MappingFragment StoreEntitySet="AnalizSonucu">
+                <ScalarProperty Name="AnalizID" ColumnName="AnalizID" />
+                <ScalarProperty Name="OturumID" ColumnName="OturumID" />
+                <ScalarProperty Name="AnalizTipi" ColumnName="AnalizTipi" />
+                <ScalarProperty Name="Metodoloji" ColumnName="Metodoloji" />
+                <ScalarProperty Name="MetricsJSON" ColumnName="MetricsJSON" />
+                <ScalarProperty Name="Summary" ColumnName="Summary" />
+                <ScalarProperty Name="AnalizTarihi" ColumnName="AnalizTarihi" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="EEGVerisi">
+            <EntityTypeMapping TypeName="eegDBModel.EEGVerisi">
+              <MappingFragment StoreEntitySet="EEGVerisi">
+                <ScalarProperty Name="EEGID" ColumnName="EEGID" />
+                <ScalarProperty Name="OturumID" ColumnName="OturumID" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="Delta" ColumnName="Delta" />
+                <ScalarProperty Name="Theta" ColumnName="Theta" />
+                <ScalarProperty Name="LowAlpha" ColumnName="LowAlpha" />
+                <ScalarProperty Name="HighAlpha" ColumnName="HighAlpha" />
+                <ScalarProperty Name="LowBeta" ColumnName="LowBeta" />
+                <ScalarProperty Name="HighBeta" ColumnName="HighBeta" />
+                <ScalarProperty Name="LowGamma" ColumnName="LowGamma" />
+                <ScalarProperty Name="HighGamma" ColumnName="HighGamma" />
+                <ScalarProperty Name="BlinkStrength" ColumnName="BlinkStrength" />
+                <ScalarProperty Name="KayitZamani" ColumnName="KayitZamani" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Kullanici">
+            <EntityTypeMapping TypeName="eegDBModel.Kullanici">
+              <MappingFragment StoreEntitySet="Kullanici">
+                <ScalarProperty Name="Notlar" ColumnName="Notlar" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="AdSoyad" ColumnName="AdSoyad" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="SifreHash" ColumnName="SifreHash" />
+                <ScalarProperty Name="KayitTarihi" ColumnName="KayitTarihi" />
+                <ScalarProperty Name="Rol" ColumnName="Rol" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Oturum">
+            <EntityTypeMapping TypeName="eegDBModel.Oturum">
+              <MappingFragment StoreEntitySet="Oturum">
+                <ScalarProperty Name="ZamanEtiketiID" ColumnName="ZamanEtiketiID" />
+                <ScalarProperty Name="DeneyTuruID" ColumnName="DeneyTuruID" />
+                <ScalarProperty Name="OturumID" ColumnName="OturumID" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="ZamanEtiketi" ColumnName="ZamanEtiketi" />
+                <ScalarProperty Name="DeneyTuru" ColumnName="DeneyTuru" />
+                <ScalarProperty Name="KayitBaslangic" ColumnName="KayitBaslangic" />
+                <ScalarProperty Name="KayitBitis" ColumnName="KayitBitis" />
+                <ScalarProperty Name="Notlar" ColumnName="Notlar" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Yonetici">
+            <EntityTypeMapping TypeName="eegDBModel.Yonetici">
+              <MappingFragment StoreEntitySet="Yonetici">
+                <ScalarProperty Name="YoneticiID" ColumnName="YoneticiID" />
+                <ScalarProperty Name="KullaniciAdi" ColumnName="KullaniciAdi" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="SifreHash" ColumnName="SifreHash" />
+                <ScalarProperty Name="YetkiSeviyesi" ColumnName="YetkiSeviyesi" />
+                <ScalarProperty Name="KayitTarihi" ColumnName="KayitTarihi" />
+                <ScalarProperty Name="AnalizModuluAktifMi" ColumnName="AnalizModuluAktifMi" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="AuditLog">
+            <EntityTypeMapping TypeName="eegDBModel.AuditLog">
+              <MappingFragment StoreEntitySet="AuditLog">
+                <ScalarProperty Name="Seviye" ColumnName="Seviye" />
+                <ScalarProperty Name="Detay" ColumnName="Detay" />
+                <ScalarProperty Name="Islem" ColumnName="Islem" />
+                <ScalarProperty Name="KullaniciAdi" ColumnName="KullaniciAdi" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="Tarih" ColumnName="Tarih" />
+                <ScalarProperty Name="LogID" ColumnName="LogID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SinavSonucu">
+            <EntityTypeMapping TypeName="eegDBModel.SinavSonucu">
+              <MappingFragment StoreEntitySet="SinavSonucu">
+                <ScalarProperty Name="Sure" ColumnName="Sure" />
+                <ScalarProperty Name="BitisTarihi" ColumnName="BitisTarihi" />
+                <ScalarProperty Name="BaslamaTarihi" ColumnName="BaslamaTarihi" />
+                <ScalarProperty Name="YanlisSayisi" ColumnName="YanlisSayisi" />
+                <ScalarProperty Name="DogruSayisi" ColumnName="DogruSayisi" />
+                <ScalarProperty Name="ToplamSoru" ColumnName="ToplamSoru" />
+                <ScalarProperty Name="SinavTuru" ColumnName="SinavTuru" />
+                <ScalarProperty Name="OturumID" ColumnName="OturumID" />
+                <ScalarProperty Name="SinavSonucuID" ColumnName="SinavSonucuID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="KullaniciModulYetkisi">
+            <EntityTypeMapping TypeName="eegDBModel.KullaniciModulYetkisi">
+              <MappingFragment StoreEntitySet="KullaniciModulYetkisi">
+                <ScalarProperty Name="TanimlayanYoneticiID" ColumnName="TanimlayanYoneticiID" />
+                <ScalarProperty Name="TanimTarihi" ColumnName="TanimTarihi" />
+                <ScalarProperty Name="AktifMi" ColumnName="AktifMi" />
+                <ScalarProperty Name="ModulAdi" ColumnName="ModulAdi" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="YetkiID" ColumnName="YetkiID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="DeneyTuru">
+            <EntityTypeMapping TypeName="eegDBModel.DeneyTuru">
+              <MappingFragment StoreEntitySet="DeneyTuru">
+                <ScalarProperty Name="EklenmeTarihi" ColumnName="EklenmeTarihi" />
+                <ScalarProperty Name="Aktif" ColumnName="Aktif" />
+                <ScalarProperty Name="Aciklama" ColumnName="Aciklama" />
+                <ScalarProperty Name="TurAdi" ColumnName="TurAdi" />
+                <ScalarProperty Name="DeneyTuruID" ColumnName="DeneyTuruID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ZamanEtiketi">
+            <EntityTypeMapping TypeName="eegDBModel.ZamanEtiketi">
+              <MappingFragment StoreEntitySet="ZamanEtiketi">
+                <ScalarProperty Name="EklenmeTarihi" ColumnName="EklenmeTarihi" />
+                <ScalarProperty Name="Aktif" ColumnName="Aktif" />
+                <ScalarProperty Name="Aciklama" ColumnName="Aciklama" />
+                <ScalarProperty Name="EtiketAdi" ColumnName="EtiketAdi" />
+                <ScalarProperty Name="ZamanEtiketiID" ColumnName="ZamanEtiketiID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>
