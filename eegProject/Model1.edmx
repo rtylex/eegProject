@@ -16,6 +16,8 @@
           <Property Name="MetricsJSON" Type="nvarchar(max)" />
           <Property Name="Summary" Type="nvarchar(max)" />
           <Property Name="AnalizTarihi" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="SinavVerisiDahilMi" Type="bit" Nullable="false" />
+          <Property Name="SinavMetricsJson" Type="nvarchar(max)" />
         </EntityType>
         <EntityType Name="AuditLog">
           <Key>
@@ -94,6 +96,43 @@
           <Property Name="DeneyTuruID" Type="int" />
           <Property Name="ZamanEtiketiID" Type="int" />
         </EntityType>
+        <EntityType Name="SinavAtama">
+          <Key>
+            <PropertyRef Name="AtamaID" />
+          </Key>
+          <Property Name="AtamaID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" Nullable="false" />
+          <Property Name="SinavAdi" Type="nvarchar" MaxLength="200" Nullable="false" />
+          <Property Name="SinavAciklama" Type="nvarchar" MaxLength="500" />
+          <Property Name="SinavJsonPath" Type="nvarchar" MaxLength="500" />
+          <Property Name="SinavJsonContent" Type="nvarchar(max)" />
+          <Property Name="AtayanYoneticiID" Type="int" Nullable="false" />
+          <Property Name="AtamaTarihi" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="SonGecerlilikTarihi" Type="datetime2" Precision="7" />
+          <Property Name="TamamlandiMi" Type="bit" Nullable="false" />
+          <Property Name="TamamlanmaTarihi" Type="datetime2" Precision="7" />
+          <Property Name="Notlar" Type="nvarchar(max)" />
+        </EntityType>
+        <EntityType Name="SinavCevap">
+          <Key>
+            <PropertyRef Name="CevapID" />
+          </Key>
+          <Property Name="CevapID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="SinavSonucuID" Type="int" Nullable="false" />
+          <Property Name="SoruNo" Type="int" Nullable="false" />
+          <Property Name="SoruTipi" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="SoruMetni" Type="nvarchar(max)" />
+          <Property Name="DogruCevap" Type="nvarchar(max)" />
+          <Property Name="VerilenCevap" Type="nvarchar(max)" />
+          <Property Name="CevaplamaSuresi" Type="int" />
+          <Property Name="DogruMu" Type="bit" Nullable="false" />
+          <Property Name="ToplamPuan" Type="float" />
+          <Property Name="AlinanPuan" Type="float" />
+          <Property Name="AnahtarKelimelerJson" Type="nvarchar(max)" />
+          <Property Name="EslesenAnahtarKelimeler" Type="nvarchar(max)" />
+          <Property Name="EslesmeYuzdesi" Type="float" />
+          <Property Name="CevapTarihi" Type="datetime2" Precision="7" Nullable="false" />
+        </EntityType>
         <EntityType Name="SinavSonucu">
           <Key>
             <PropertyRef Name="SinavSonucuID" />
@@ -107,6 +146,15 @@
           <Property Name="BaslamaTarihi" Type="datetime2" Precision="7" Nullable="false" />
           <Property Name="BitisTarihi" Type="datetime2" Precision="7" />
           <Property Name="Sure" Type="nvarchar" MaxLength="50" />
+          <Property Name="AtamaID" Type="int" />
+          <Property Name="AnalizeEkle" Type="bit" Nullable="false" />
+          <Property Name="JsonDetay" Type="nvarchar(max)" />
+          <Property Name="OrtalamaCevapSuresi" Type="float" />
+          <Property Name="ToplamPuan" Type="float" />
+          <Property Name="AlinanPuan" Type="float" />
+          <Property Name="BasariYuzdesi" Type="float" />
+          <Property Name="CokSeçmeliSayisi" Type="int" />
+          <Property Name="KlasikSoruSayisi" Type="int" />
         </EntityType>
         <EntityType Name="Yonetici">
           <Key>
@@ -234,6 +282,56 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_SinavAtama_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavAtama_Yonetici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="AtayanYoneticiID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavCevap_SinavSonucu">
+          <End Role="SinavSonucu" Type="Self.SinavSonucu" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="SinavCevap" Type="Self.SinavCevap" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SinavSonucu">
+              <PropertyRef Name="SinavSonucuID" />
+            </Principal>
+            <Dependent Role="SinavCevap">
+              <PropertyRef Name="SinavSonucuID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavSonucu_SinavAtama">
+          <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="0..1" />
+          <End Role="SinavSonucu" Type="Self.SinavSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SinavAtama">
+              <PropertyRef Name="AtamaID" />
+            </Principal>
+            <Dependent Role="SinavSonucu">
+              <PropertyRef Name="AtamaID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="eegDBModelStoreContainer">
           <EntitySet Name="AnalizSonucu" EntityType="Self.AnalizSonucu" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="AuditLog" EntityType="Self.AuditLog" Schema="dbo" store:Type="Tables" />
@@ -242,6 +340,8 @@
           <EntitySet Name="Kullanici" EntityType="Self.Kullanici" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="KullaniciModulYetkisi" EntityType="Self.KullaniciModulYetkisi" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Oturum" EntityType="Self.Oturum" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SinavAtama" EntityType="Self.SinavAtama" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SinavCevap" EntityType="Self.SinavCevap" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SinavSonucu" EntityType="Self.SinavSonucu" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Yonetici" EntityType="Self.Yonetici" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ZamanEtiketi" EntityType="Self.ZamanEtiketi" Schema="dbo" store:Type="Tables" />
@@ -277,6 +377,22 @@
             <End Role="ZamanEtiketi" EntitySet="ZamanEtiketi" />
             <End Role="Oturum" EntitySet="Oturum" />
           </AssociationSet>
+          <AssociationSet Name="FK_SinavAtama_Kullanici" Association="Self.FK_SinavAtama_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavAtama_Yonetici" Association="Self.FK_SinavAtama_Yonetici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavCevap_SinavSonucu" Association="Self.FK_SinavCevap_SinavSonucu">
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+            <End Role="SinavCevap" EntitySet="SinavCevap" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavSonucu_SinavAtama" Association="Self.FK_SinavSonucu_SinavAtama">
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -294,6 +410,8 @@
           <Property Name="Summary" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="AnalizTarihi" Type="DateTime" Nullable="false" Precision="7" />
           <NavigationProperty Name="Oturum" Relationship="Self.FK_Analiz_Oturum" FromRole="AnalizSonucu" ToRole="Oturum" />
+          <Property Name="SinavVerisiDahilMi" Type="Boolean" Nullable="false" />
+          <Property Name="SinavMetricsJson" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="EEGVerisi">
           <Key>
@@ -329,6 +447,8 @@
           <NavigationProperty Name="Oturum" Relationship="Self.FK_Oturum_Kullanici" FromRole="Kullanici" ToRole="Oturum" />
           <Property Name="Notlar" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="KullaniciModulYetkisi" Relationship="eegDBModel.FK__Kullanici__Kulla__66603565" FromRole="Kullanici" ToRole="KullaniciModulYetkisi" />
+          <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavAtama_Kullanici" FromRole="Kullanici" ToRole="SinavAtama" />
+          <NavigationProperty Name="SinavAtama1" Relationship="eegDBModel.FK_SinavAtama_Yonetici" FromRole="Kullanici" ToRole="SinavAtama" />
         </EntityType>
         <EntityType Name="Oturum">
           <Key>
@@ -459,6 +579,24 @@
             <End Role="ZamanEtiketi" EntitySet="ZamanEtiketi" />
             <End Role="Oturum" EntitySet="Oturum" />
           </AssociationSet>
+          <EntitySet Name="SinavAtama" EntityType="eegDBModel.SinavAtama" />
+          <EntitySet Name="SinavCevap" EntityType="eegDBModel.SinavCevap" />
+          <AssociationSet Name="FK_SinavAtama_Kullanici" Association="eegDBModel.FK_SinavAtama_Kullanici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavAtama_Yonetici" Association="eegDBModel.FK_SinavAtama_Yonetici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavSonucu_SinavAtama" Association="eegDBModel.FK_SinavSonucu_SinavAtama">
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+          </AssociationSet>
+          <AssociationSet Name="FK_SinavCevap_SinavSonucu" Association="eegDBModel.FK_SinavCevap_SinavSonucu">
+            <End Role="SinavSonucu" EntitySet="SinavSonucu" />
+            <End Role="SinavCevap" EntitySet="SinavCevap" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="AuditLog">
           <Key>
@@ -486,6 +624,17 @@
           <Property Name="BitisTarihi" Type="DateTime" Precision="7" />
           <Property Name="Sure" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="Oturum" Relationship="eegDBModel.FK__SinavSonu__Oturu__60A75C0F" FromRole="SinavSonucu" ToRole="Oturum" />
+          <Property Name="AtamaID" Type="Int32" />
+          <Property Name="AnalizeEkle" Type="Boolean" Nullable="false" />
+          <Property Name="JsonDetay" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="OrtalamaCevapSuresi" Type="Double" />
+          <Property Name="ToplamPuan" Type="Double" />
+          <Property Name="AlinanPuan" Type="Double" />
+          <Property Name="BasariYuzdesi" Type="Double" />
+          <Property Name="CokSeçmeliSayisi" Type="Int32" />
+          <Property Name="KlasikSoruSayisi" Type="Int32" />
+          <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavSonucu_SinavAtama" FromRole="SinavSonucu" ToRole="SinavAtama" />
+          <NavigationProperty Name="SinavCevap" Relationship="eegDBModel.FK_SinavCevap_SinavSonucu" FromRole="SinavSonucu" ToRole="SinavCevap" />
         </EntityType>
         <Association Name="FK__SinavSonu__Oturu__60A75C0F">
           <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="1">
@@ -571,6 +720,97 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="SinavAtama">
+          <Key>
+            <PropertyRef Name="AtamaID" />
+          </Key>
+          <Property Name="AtamaID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="KullaniciID" Type="Int32" Nullable="false" />
+          <Property Name="SinavAdi" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="SinavAciklama" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="SinavJsonPath" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="SinavJsonContent" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="AtayanYoneticiID" Type="Int32" Nullable="false" />
+          <Property Name="AtamaTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <Property Name="SonGecerlilikTarihi" Type="DateTime" Precision="7" />
+          <Property Name="TamamlandiMi" Type="Boolean" Nullable="false" />
+          <Property Name="TamamlanmaTarihi" Type="DateTime" Precision="7" />
+          <Property Name="Notlar" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Kullanici" Relationship="eegDBModel.FK_SinavAtama_Kullanici" FromRole="SinavAtama" ToRole="Kullanici" />
+          <NavigationProperty Name="Kullanici1" Relationship="eegDBModel.FK_SinavAtama_Yonetici" FromRole="SinavAtama" ToRole="Kullanici" />
+          <NavigationProperty Name="SinavSonucu" Relationship="eegDBModel.FK_SinavSonucu_SinavAtama" FromRole="SinavAtama" ToRole="SinavSonucu" />
+        </EntityType>
+        <EntityType Name="SinavCevap">
+          <Key>
+            <PropertyRef Name="CevapID" />
+          </Key>
+          <Property Name="CevapID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="SinavSonucuID" Type="Int32" Nullable="false" />
+          <Property Name="SoruNo" Type="Int32" Nullable="false" />
+          <Property Name="SoruTipi" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SoruMetni" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="DogruCevap" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="VerilenCevap" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CevaplamaSuresi" Type="Int32" />
+          <Property Name="DogruMu" Type="Boolean" Nullable="false" />
+          <Property Name="ToplamPuan" Type="Double" />
+          <Property Name="AlinanPuan" Type="Double" />
+          <Property Name="AnahtarKelimelerJson" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="EslesenAnahtarKelimeler" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="EslesmeYuzdesi" Type="Double" />
+          <Property Name="CevapTarihi" Type="DateTime" Nullable="false" Precision="7" />
+          <NavigationProperty Name="SinavSonucu" Relationship="eegDBModel.FK_SinavCevap_SinavSonucu" FromRole="SinavCevap" ToRole="SinavSonucu" />
+        </EntityType>
+        <Association Name="FK_SinavAtama_Kullanici">
+          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="1" />
+          <End Type="eegDBModel.SinavAtama" Role="SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="KullaniciID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavAtama_Yonetici">
+          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="1" />
+          <End Type="eegDBModel.SinavAtama" Role="SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="AtayanYoneticiID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavSonucu_SinavAtama">
+          <End Type="eegDBModel.SinavAtama" Role="SinavAtama" Multiplicity="0..1" />
+          <End Type="eegDBModel.SinavSonucu" Role="SinavSonucu" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SinavAtama">
+              <PropertyRef Name="AtamaID" />
+            </Principal>
+            <Dependent Role="SinavSonucu">
+              <PropertyRef Name="AtamaID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavCevap_SinavSonucu">
+          <End Type="eegDBModel.SinavSonucu" Role="SinavSonucu" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="eegDBModel.SinavCevap" Role="SinavCevap" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SinavSonucu">
+              <PropertyRef Name="SinavSonucuID" />
+            </Principal>
+            <Dependent Role="SinavCevap">
+              <PropertyRef Name="SinavSonucuID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -580,6 +820,8 @@
           <EntitySetMapping Name="AnalizSonucu">
             <EntityTypeMapping TypeName="eegDBModel.AnalizSonucu">
               <MappingFragment StoreEntitySet="AnalizSonucu">
+                <ScalarProperty Name="SinavMetricsJson" ColumnName="SinavMetricsJson" />
+                <ScalarProperty Name="SinavVerisiDahilMi" ColumnName="SinavVerisiDahilMi" />
                 <ScalarProperty Name="AnalizID" ColumnName="AnalizID" />
                 <ScalarProperty Name="OturumID" ColumnName="OturumID" />
                 <ScalarProperty Name="AnalizTipi" ColumnName="AnalizTipi" />
@@ -666,6 +908,15 @@
           <EntitySetMapping Name="SinavSonucu">
             <EntityTypeMapping TypeName="eegDBModel.SinavSonucu">
               <MappingFragment StoreEntitySet="SinavSonucu">
+                <ScalarProperty Name="KlasikSoruSayisi" ColumnName="KlasikSoruSayisi" />
+                <ScalarProperty Name="CokSeçmeliSayisi" ColumnName="CokSeçmeliSayisi" />
+                <ScalarProperty Name="BasariYuzdesi" ColumnName="BasariYuzdesi" />
+                <ScalarProperty Name="AlinanPuan" ColumnName="AlinanPuan" />
+                <ScalarProperty Name="ToplamPuan" ColumnName="ToplamPuan" />
+                <ScalarProperty Name="OrtalamaCevapSuresi" ColumnName="OrtalamaCevapSuresi" />
+                <ScalarProperty Name="JsonDetay" ColumnName="JsonDetay" />
+                <ScalarProperty Name="AnalizeEkle" ColumnName="AnalizeEkle" />
+                <ScalarProperty Name="AtamaID" ColumnName="AtamaID" />
                 <ScalarProperty Name="Sure" ColumnName="Sure" />
                 <ScalarProperty Name="BitisTarihi" ColumnName="BitisTarihi" />
                 <ScalarProperty Name="BaslamaTarihi" ColumnName="BaslamaTarihi" />
@@ -709,6 +960,45 @@
                 <ScalarProperty Name="Aciklama" ColumnName="Aciklama" />
                 <ScalarProperty Name="EtiketAdi" ColumnName="EtiketAdi" />
                 <ScalarProperty Name="ZamanEtiketiID" ColumnName="ZamanEtiketiID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SinavAtama">
+            <EntityTypeMapping TypeName="eegDBModel.SinavAtama">
+              <MappingFragment StoreEntitySet="SinavAtama">
+                <ScalarProperty Name="Notlar" ColumnName="Notlar" />
+                <ScalarProperty Name="TamamlanmaTarihi" ColumnName="TamamlanmaTarihi" />
+                <ScalarProperty Name="TamamlandiMi" ColumnName="TamamlandiMi" />
+                <ScalarProperty Name="SonGecerlilikTarihi" ColumnName="SonGecerlilikTarihi" />
+                <ScalarProperty Name="AtamaTarihi" ColumnName="AtamaTarihi" />
+                <ScalarProperty Name="AtayanYoneticiID" ColumnName="AtayanYoneticiID" />
+                <ScalarProperty Name="SinavJsonContent" ColumnName="SinavJsonContent" />
+                <ScalarProperty Name="SinavJsonPath" ColumnName="SinavJsonPath" />
+                <ScalarProperty Name="SinavAciklama" ColumnName="SinavAciklama" />
+                <ScalarProperty Name="SinavAdi" ColumnName="SinavAdi" />
+                <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
+                <ScalarProperty Name="AtamaID" ColumnName="AtamaID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SinavCevap">
+            <EntityTypeMapping TypeName="eegDBModel.SinavCevap">
+              <MappingFragment StoreEntitySet="SinavCevap">
+                <ScalarProperty Name="CevapTarihi" ColumnName="CevapTarihi" />
+                <ScalarProperty Name="EslesmeYuzdesi" ColumnName="EslesmeYuzdesi" />
+                <ScalarProperty Name="EslesenAnahtarKelimeler" ColumnName="EslesenAnahtarKelimeler" />
+                <ScalarProperty Name="AnahtarKelimelerJson" ColumnName="AnahtarKelimelerJson" />
+                <ScalarProperty Name="AlinanPuan" ColumnName="AlinanPuan" />
+                <ScalarProperty Name="ToplamPuan" ColumnName="ToplamPuan" />
+                <ScalarProperty Name="DogruMu" ColumnName="DogruMu" />
+                <ScalarProperty Name="CevaplamaSuresi" ColumnName="CevaplamaSuresi" />
+                <ScalarProperty Name="VerilenCevap" ColumnName="VerilenCevap" />
+                <ScalarProperty Name="DogruCevap" ColumnName="DogruCevap" />
+                <ScalarProperty Name="SoruMetni" ColumnName="SoruMetni" />
+                <ScalarProperty Name="SoruTipi" ColumnName="SoruTipi" />
+                <ScalarProperty Name="SoruNo" ColumnName="SoruNo" />
+                <ScalarProperty Name="SinavSonucuID" ColumnName="SinavSonucuID" />
+                <ScalarProperty Name="CevapID" ColumnName="CevapID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

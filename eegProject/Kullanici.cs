@@ -20,6 +20,8 @@ namespace eegProject
             this.EEGVerisi = new HashSet<EEGVerisi>();
             this.Oturum = new HashSet<Oturum>();
             this.KullaniciModulYetkisi = new HashSet<KullaniciModulYetkisi>();
+            this.SinavAtama = new HashSet<SinavAtama>();
+            this.SinavAtama1 = new HashSet<SinavAtama>();
         }
     
         public int KullaniciID { get; set; }
@@ -36,5 +38,9 @@ namespace eegProject
         public virtual ICollection<Oturum> Oturum { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<KullaniciModulYetkisi> KullaniciModulYetkisi { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SinavAtama> SinavAtama { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SinavAtama> SinavAtama1 { get; set; }
     }
 }

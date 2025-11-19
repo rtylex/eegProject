@@ -35,5 +35,7 @@ namespace eegProject
         public virtual DbSet<KullaniciModulYetkisi> KullaniciModulYetkisi { get; set; }
         public virtual DbSet<DeneyTuru> DeneyTuru { get; set; }
         public virtual DbSet<ZamanEtiketi> ZamanEtiketi { get; set; }
+        public virtual DbSet<SinavAtama> SinavAtama { get; set; }
+        public virtual DbSet<SinavCevap> SinavCevap { get; set; }
     }
 }

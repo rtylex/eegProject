@@ -68,8 +68,26 @@ namespace eegProject.Services
                 throw new ArgumentException("AnalysesJSON bos olamaz", nameof(analysesJson));
             }
 
-            var prompt = BuildComparativePrompt(userName, experimentType, analysesJson);
+            var prompt = BuildComparativePrompt(userName, experimentType, analysesJson, null);
             return await CallOpenAiAsync(prompt, maxTokens: 800);
+        }
+
+        /// <summary>
+        /// Çoklu oturum için SINAV VERİSİ DAHİL karşılaştırmalı AI yorumu oluşturur
+        /// </summary>
+        public async Task<string> GenerateComparativeSummaryWithExamAsync(
+            string userName, 
+            string experimentType, 
+            string analysesJson, 
+            string examDataJson)
+        {
+            if (string.IsNullOrWhiteSpace(analysesJson))
+            {
+                throw new ArgumentException("AnalysesJSON bos olamaz", nameof(analysesJson));
+            }
+
+            var prompt = BuildComparativePrompt(userName, experimentType, analysesJson, examDataJson);
+            return await CallOpenAiAsync(prompt, maxTokens: 1000);
         }
 
         /// <summary>
@@ -176,8 +194,22 @@ Ornek Format:
         /// <summary>
         /// Çoklu oturum için karşılaştırmalı prompt oluşturur (BAZAL REFERANSLI)
         /// </summary>
-        private string BuildComparativePrompt(string userName, string experimentType, string analysesJson)
+        private string BuildComparativePrompt(string userName, string experimentType, string analysesJson, string examDataJson = null)
         {
+            bool hasExamData = !string.IsNullOrWhiteSpace(examDataJson);
+
+            string examSection = hasExamData ? $@"
+
+!!! SINAV SONUCLARI DAHIL !!!
+Sinav Verileri:
+{examDataJson}
+
+Onemli: Sinav verilerini EEG metrikleriyle birlikte degerlendir:
+- Sinav basarisi ile dikkat/konsantrasyon arasindaki iliskiyi yorumla
+- Hangi oturumda hem EEG hem sinav performansi daha iyi?
+- Sinav basarisindaki degisim ile EEG metriklerindeki degisim paralel mi?
+" : "";
+
             return $@"EEG Deney Analizi - BAZAL REFERANSLI Karsilastirmali Rapor
 
 Katilimci: {userName ?? "Bilinmiyor"}
@@ -187,7 +219,7 @@ Deney Turu: {experimentType ?? "Genel"}
 - BazalOturum fieldindaki deger REFERANS degeridir (kontrol/baslangic durumu)
 - Diger tum oturumlar BAZALA GORE yuzde degisim olarak karsilastirilmistir
 - ChangePercent fieldi: Pozitif = Bazala gore ARTIŞ, Negatif = Bazala gore AZALMA
-
+{examSection}
 Oturum Verileri:
 {analysesJson}
 
@@ -198,6 +230,7 @@ Gorev:
 4. Hangi oturumda bazala gore dusus var?
 5. Genel trend nedir? (Orn: Bazaldan 1 saate %15 artiş, sonra stabil)
 6. Deney etkisini BAZALA GORE degerlendir
+{(hasExamData ? "7. SINAV SONUCLARI ile EEG metriklerini KORELE et (cok onemli!)" : "")}
 
 Format:
 OZET:
@@ -207,14 +240,19 @@ BAZALA GORE BULGULAR:
 - [En yuksek artiş gosteren oturum + yuzde]
 - [En dusuk/azalma gosteren oturum + yuzde]
 - [Genel trend: Bazala gore ortalama degisim]
+{(hasExamData ? @"
+SINAV-EEG KORELASYONU:
+- [Sinav basarisi en yuksek oturumdaki EEG durumu]
+- [EEG ve sinav performansi arasindaki iliski]
+- [Hangi kosulda hem EEG hem sinav daha iyi?]" : "")}
 
 DEGERLENDIRME:
-[Bazala gore genel yorumlama - deney basarili mi? Hangi kosulda daha iyi?]
+[Bazala gore genel yorumlama - deney basarili mi? Hangi kosulda daha iyi?{(hasExamData ? " Sinav sonuclari degerlendirmeyi nasil etkiliyor?" : "")}]
 
 ONERI: (opsiyonel)
 [Pratik oneri]
 
-Maksimum 500 kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma!
+Maksimum {(hasExamData ? "600" : "500")} kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma!
 ";
         }
 

@@ -81,6 +81,8 @@
             this.panelLogsActions = new System.Windows.Forms.FlowLayoutPanel();
             this.btnRefreshLogs = new System.Windows.Forms.Button();
             this.btnClearLogs = new System.Windows.Forms.Button();
+            this.tabPageDeneme = new System.Windows.Forms.TabPage();
+            this.lblDenemeContent = new System.Windows.Forms.Label();
             this.tabMain.SuspendLayout();
             this.tabPageUsers.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridUsers)).BeginInit();
@@ -108,6 +110,7 @@
             this.tabPageLogs.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridLogs)).BeginInit();
             this.panelLogsActions.SuspendLayout();
+            this.tabPageDeneme.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabMain
@@ -120,6 +123,7 @@
             this.tabMain.Controls.Add(this.tabPageUserNotes);
             this.tabMain.Controls.Add(this.tabPageExport);
             this.tabMain.Controls.Add(this.tabPageLogs);
+            this.tabMain.Controls.Add(this.tabPageDeneme);
             this.tabMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabMain.Location = new System.Drawing.Point(0, 0);
             this.tabMain.Name = "tabMain";
@@ -156,6 +160,7 @@
             this.gridUsers.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.gridUsers.Size = new System.Drawing.Size(1150, 675);
             this.gridUsers.TabIndex = 1;
+            this.gridUsers.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.gridUsers_CellContentClick);
             // 
             // panelUsersActions
             // 
@@ -862,6 +867,27 @@
             this.btnClearLogs.UseVisualStyleBackColor = true;
             this.btnClearLogs.Click += new System.EventHandler(this.btnClearLogs_Click);
             // 
+            // tabPageDeneme
+            // 
+            this.tabPageDeneme.Controls.Add(this.lblDenemeContent);
+            this.tabPageDeneme.Location = new System.Drawing.Point(4, 25);
+            this.tabPageDeneme.Name = "tabPageDeneme";
+            this.tabPageDeneme.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageDeneme.Size = new System.Drawing.Size(1156, 732);
+            this.tabPageDeneme.TabIndex = 8;
+            this.tabPageDeneme.Text = "Deneme";
+            this.tabPageDeneme.UseVisualStyleBackColor = true;
+            // 
+            // lblDenemeContent
+            // 
+            this.lblDenemeContent.AutoSize = true;
+            this.lblDenemeContent.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            this.lblDenemeContent.Location = new System.Drawing.Point(50, 50);
+            this.lblDenemeContent.Name = "lblDenemeContent";
+            this.lblDenemeContent.Size = new System.Drawing.Size(500, 31);
+            this.lblDenemeContent.TabIndex = 0;
+            this.lblDenemeContent.Text = "Deneme Sekmesi Basariyla Olusturuldu!";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -908,6 +934,8 @@
             this.tabPageLogs.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridLogs)).EndInit();
             this.panelLogsActions.ResumeLayout(false);
+            this.tabPageDeneme.ResumeLayout(false);
+            this.tabPageDeneme.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -978,6 +1006,8 @@
         private System.Windows.Forms.Label lblNotesUserName;
         private System.Windows.Forms.Button btnSaveNotes;
         private System.Windows.Forms.TabPage tabPageSinav;
+        private System.Windows.Forms.TabPage tabPageDeneme;
+        private System.Windows.Forms.Label lblDenemeContent;
     }
 }
 

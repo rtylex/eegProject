@@ -14,8 +14,15 @@ using eegProject.Services;
 using eegProject.Models;
 namespace eegProject
 {
+    /// <summary>
+    /// EEG Yönetim Paneli - Ana Form
+    /// Kullanıcı, Oturum, EEG Verisi, Analiz, Sınav Modülü ve Denetim Günlüklerini yönetir
+    /// </summary>
     public partial class Form1 : Form
     {
+        #region FIELDS - Servisler, Binding'ler ve State Değişkenleri
+
+        // ===== SERVICES =====
         private readonly UserService _userService = new UserService();
         private readonly SessionService _sessionService = new SessionService();
         private readonly EegDataService _eegDataService = new EegDataService();
@@ -29,12 +36,18 @@ namespace eegProject
         private readonly ExamService _examService = new ExamService();
         private readonly ExamLoaderService _examLoaderService = new ExamLoaderService();
         private readonly ModulYetkisiService _modulYetkisiService = new ModulYetkisiService();
+        private readonly SinavAtamaService _sinavAtamaService = new SinavAtamaService();
+        private readonly SinavCevapService _sinavCevapService = new SinavCevapService();
+
+        // ===== BINDING SOURCES =====
         private readonly BindingSource _userBindingSource = new BindingSource();
         private readonly BindingSource _sessionBindingSource = new BindingSource();
         private readonly BindingSource _eegBindingSource = new BindingSource();
         private readonly BindingSource _analysisBindingSource = new BindingSource();
         private readonly BindingSource _userNotesBindingSource = new BindingSource();
         private readonly BindingSource _logsBindingSource = new BindingSource();
+
+        // ===== DATA COLLECTIONS =====
         private BindingList<Kullanici> _users = new BindingList<Kullanici>();
         private BindingList<SessionRow> _sessions = new BindingList<SessionRow>();
         private BindingList<EEGVerisi> _eegSamples = new BindingList<EEGVerisi>();
@@ -43,22 +56,39 @@ namespace eegProject
         private readonly BindingList<SessionRow> _streamSessionOptions = new BindingList<SessionRow>();
         private List<DeneyTuru> _deneyTurleri = new List<DeneyTuru>();
         private List<ZamanEtiketi> _zamanEtiketleri = new List<ZamanEtiketi>();
+
+        // ===== UI STATE =====
         private bool _userBusy;
         private bool _sessionBusy;
         private bool _analysisBusy;
+
+        // ===== STREAMING STATE =====
         private CancellationTokenSource _streamCts;
         private Task _streamTask;
         private int? _streamingSessionId;
         private const int MaxVisibleEegSamples = 200;
-        // S�nav mod�l� de�i�kenleri
+
+        // ===== EXAM MODULE STATE =====
         private ExamData _loadedExam;
+        private SinavAtama _currentAtama; // Atanmış sınav
         private Dictionary<int, string> _userAnswers = new Dictionary<int, string>();
+        private Dictionary<int, int> _questionTimes = new Dictionary<int, int>(); // Soru bazlı süreler (saniye)
+        private System.Diagnostics.Stopwatch _questionStopwatch = new System.Diagnostics.Stopwatch(); // Soru kronometresi
         private int _currentQuestionIndex = 0;
         private DateTime _examStartTime;
-        // Giri� yapan kullan�c� bilgileri
+
+        // ===== CURRENT USER INFO =====
         private readonly int _currentUserId;
         private readonly string _currentUserRole;
         private readonly string _currentUserName;
+
+        #endregion
+
+        #region CONSTRUCTOR
+
+        /// <summary>
+        /// Form constructor - Giriş yapan kullanıcı bilgileriyle başlatılır
+        /// </summary>
         public Form1(int currentUserId, string currentUserRole, string currentUserName)
         {
             _currentUserId = currentUserId;
@@ -71,6 +101,11 @@ namespace eegProject
             InitializeModulYetkisiTab();
             UpdateStreamStatus("Hazir");
         }
+
+        #endregion
+
+        #region INITIALIZATION - Form Load ve Grid Hazırlama
+
         private void InitializeGrids()
         {
             InitializeUserGrid();
@@ -644,6 +679,11 @@ namespace eegProject
             }
             RefreshExportControls();
         }
+
+        #endregion
+
+        #region USER MANAGEMENT - Kullanıcı CRUD İşlemleri
+
         private async Task RefreshUsersAsync()
         {
             SetUserBusyState(true);
@@ -1091,11 +1131,11 @@ namespace eegProject
                 return true;
             }
         }
-        private void ShowError(string message, Exception ex)
-        {
-            var errorText = ex?.Message ?? string.Empty;
-            MessageBox.Show(this, $"{message}{Environment.NewLine}{errorText}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
+
+        #endregion
+
+        #region SESSION MANAGEMENT - Oturum Yönetimi
+
         private async void btnRefreshSessions_Click(object sender, EventArgs e)
         {
             await RefreshSessionsAsync();
@@ -1228,10 +1268,16 @@ namespace eegProject
         {
             await LoadEegSamplesForSelectedAsync();
         }
+
+        #endregion
+
+        #region EEG DATA & STREAMING - EEG Veri Gösterimi ve Streaming
+
         private async void btnRefreshEEG_Click(object sender, EventArgs e)
         {
             await LoadEegSamplesForSelectedAsync();
         }
+
         private async Task LoadEegSamplesForSelectedAsync()
         {
             var session = GetSelectedEegSession();
@@ -1352,29 +1398,7 @@ namespace eegProject
         }
         private async void btnStopStream_Click(object sender, EventArgs e)
         {
-            await StopStreamAsync("Durduruluyor...");
-        }
-        private async Task StopStreamAsync(string statusMessage)
-        {
-            if (!IsStreaming() || _streamTask == null)
-            {
-                UpdateStreamControls(false, "Hazir");
-                return;
-            }
-            UpdateStreamStatus(statusMessage);
-            try
-            {
-                _streamCts?.Cancel();
-                await _streamTask.ConfigureAwait(true);
-            }
-            catch (OperationCanceledException)
-            {
-                // expected on cancellation
-            }
-            catch (Exception ex)
-            {
-                ShowError("EEG akisi durdurulurken hata olustu.", ex);
-            }
+            await StopStreamAsync("Kullanıcı durdurdu");
         }
         private void OnStreamCompleted(Task streamTask, int sessionId)
         {
@@ -1439,6 +1463,11 @@ namespace eegProject
             
             await StopStreamAsync("Kapatiliyor");
         }
+
+        #endregion
+
+        #region ANALYSIS - Analiz Hesaplama ve Görüntüleme
+
         private async void btnRefreshAnalysis_Click(object sender, EventArgs e)
         {
             await RefreshAnalysesAsync();
@@ -1459,6 +1488,11 @@ namespace eegProject
         {
             await DeleteSelectedAnalysisAsync();
         }
+
+        #endregion
+
+        #region EXPORT - Excel ve JSON Export İşlemleri
+
         private async void btnExportExcel_Click(object sender, EventArgs e)
         {
             var userList = _userBindingSource.DataSource as BindingList<Kullanici> ?? _users;
@@ -2335,6 +2369,11 @@ namespace eegProject
                 }
             }
         }
+
+        #endregion
+
+        #region AUDIT LOGS - Denetim Günlükleri
+
         private async void btnRefreshLogs_Click(object sender, EventArgs e)
         {
             await RefreshLogsAsync();
@@ -2415,6 +2454,11 @@ namespace eegProject
                 Seviye = log.Seviye
             };
         }
+
+        #endregion
+
+        #region HELPER CLASSES - SessionRow
+
         private sealed class SessionRow
         {
             public int OturumID { get; set; }
@@ -2435,201 +2479,416 @@ namespace eegProject
                 }
             }
         }
-        #region S�nav Mod�l�
+
+        #endregion
+
+        #region Sinav Modulu - Gelismis Versiyon
+
         private void InitializeSinavTab()
         {
-            // KAYIT DURUMU PANEL
+            int currentTop = 20;
+
+            // YÖNETİCİ İŞLEMLERİ PANEL (sadece Admin/Yönetici için)
+            bool isAdmin = string.Equals(_currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            bool isYonetici = string.Equals(_currentUserRole, "Yonetici", StringComparison.OrdinalIgnoreCase);
+
+            if (isAdmin || isYonetici)
+            {
+                var pnlYonetici = new Panel
+                {
+                    Name = "pnlYoneticiIslemleri",
+                    Left = 20,
+                    Top = currentTop,
+                    Width = 800,
+                    Height = 80,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    BackColor = System.Drawing.Color.LightYellow
+                };
+
+                var lblYonetici = new Label
+                {
+                    Text = "👨‍💼 Yönetici İşlemleri",
+                    Left = 10,
+                    Top = 10,
+                    Width = 200,
+                    Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold),
+                    ForeColor = System.Drawing.Color.DarkBlue
+                };
+
+                var btnSinavAta = new Button
+                {
+                    Name = "btnSinavAta",
+                    Text = "📝 Sınav Ata",
+                    Left = 10,
+                    Top = 40,
+                    Width = 150,
+                    Height = 35,
+                    BackColor = System.Drawing.Color.LightBlue,
+                    Font = new System.Drawing.Font("Segoe UI", 9, System.Drawing.FontStyle.Bold)
+                };
+                btnSinavAta.Click += BtnSinavAta_Click;
+
+                var btnAtamalariGor = new Button
+                {
+                    Name = "btnAtamalariGor",
+                    Text = "📋 Atamaları Görüntüle",
+                    Left = 170,
+                    Top = 40,
+                    Width = 180,
+                    Height = 35,
+                    BackColor = System.Drawing.Color.LightGreen,
+                    Font = new System.Drawing.Font("Segoe UI", 9, System.Drawing.FontStyle.Bold)
+                };
+                btnAtamalariGor.Click += BtnAtamalariGor_Click;
+
+                pnlYonetici.Controls.Add(lblYonetici);
+                pnlYonetici.Controls.Add(btnSinavAta);
+                pnlYonetici.Controls.Add(btnAtamalariGor);
+
+                tabPageSinav.Controls.Add(pnlYonetici);
+                currentTop += 90;
+            }
+
+            // ATANMIŞ SINAVLAR PANEL
+            var pnlAtamalar = new Panel
+            {
+                Name = "pnlAtamalar",
+                Left = 20,
+                Top = currentTop,
+                Width = 800,
+                Height = 150,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            var lblAtamalar = new Label
+            {
+                Text = "Atanmış Sınavlarım:",
+                Dock = DockStyle.Top,
+                Height = 25,
+                Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold),
+                Padding = new Padding(5)
+            };
+
+            var listAtamalar = new ListBox
+            {
+                Name = "listAtamalar",
+                Dock = DockStyle.Fill,
+                Font = new System.Drawing.Font("Segoe UI", 9)
+            };
+            listAtamalar.SelectedIndexChanged += ListAtamalar_SelectedIndexChanged;
+
+            var btnYenile = new Button
+            {
+                Name = "btnYenileAtamalar",
+                Text = "Yenile",
+                Dock = DockStyle.Bottom,
+                Height = 30
+            };
+            btnYenile.Click += async (s, e) => await LoadAtananSinavlarAsync();
+
+            pnlAtamalar.Controls.Add(listAtamalar);
+            pnlAtamalar.Controls.Add(lblAtamalar);
+            pnlAtamalar.Controls.Add(btnYenile);
+
+            currentTop += 160;
+
+            // SINAV BİLGİSİ
+            var lblExamInfo = new Label
+            {
+                Name = "lblExamInfo",
+                Text = "👆 Yukarıdan bir sınav seçin",
+                Left = 20,
+                Top = currentTop + 5,
+                Width = 800,
+                Height = 30,
+                Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Italic),
+                ForeColor = System.Drawing.Color.DarkBlue,
+                TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            };
+
+            currentTop += 45;
+
+            // KAYIT DURUMU
             var pnlRecordStatus = new Panel
             {
                 Name = "pnlRecordStatus",
                 Left = 20,
-                Top = 20,
-                Width = 700,
-                Height = 80,
+                Top = currentTop,
+                Width = 800,
+                Height = 60,
                 BorderStyle = BorderStyle.FixedSingle
             };
+
             var lblRecordStatus = new Label
             {
                 Name = "lblRecordStatus",
-                Text = "?? EEG Kaydı YOK - Önce EEG Verisi sekmesinden kayıt başlatın",
+                Text = "⚠️ EEG kaydı YOK - Önce EEG Verisi sekmesinden kayıt başlatın",
                 Dock = DockStyle.Fill,
                 TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
-                Font = new System.Drawing.Font("Segoe UI", 11, System.Drawing.FontStyle.Bold),
+                Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold),
                 ForeColor = System.Drawing.Color.Red
             };
             pnlRecordStatus.Controls.Add(lblRecordStatus);
-            // JSON Y�KLEME
-            var lblLoadExam = new Label
-            {
-                Text = "Sınav JSON Dosyası:",
-                Left = 20,
-                Top = 120,
-                Width = 150
-            };
-            var btnLoadExam = new Button
-            {
-                Name = "btnLoadExam",
-                Text = "JSON Yükle",
-                Left = 180,
-                Top = 115,
-                Width = 120,
-                Height = 30
-            };
-            btnLoadExam.Click += BtnLoadExam_Click;
-            var lblExamInfo = new Label
-            {
-                Name = "lblExamInfo",
-                Text = "Henüz sınav yüklenmedi",
-                Left = 310,
-                Top = 120,
-                Width = 400,
-                ForeColor = System.Drawing.Color.Gray
-            };
-            // SINAV BA�LATMA
+
+            currentTop += 75;
+
+            // SINAV BASLATMA
             var btnStartExam = new Button
             {
                 Name = "btnStartExam",
                 Text = "Sınava Başla",
                 Left = 20,
-                Top = 160,
+                Top = currentTop,
                 Width = 150,
-                Height = 40,
+                Height = 45,
                 BackColor = System.Drawing.Color.LightGreen,
-                Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold),
+                Font = new System.Drawing.Font("Segoe UI", 11, System.Drawing.FontStyle.Bold),
                 Enabled = false
             };
             btnStartExam.Click += BtnStartExam_Click;
-            var btnShowSample = new Button
-            {
-                Text = "JSON Format Örneği",
-                Left = 180,
-                Top = 160,
-                Width = 150,
-                Height = 40
-            };
-            btnShowSample.Click += BtnShowSampleJson_Click;
-            // SINAV PANEL� (ba�lang��ta gizli)
+
+            currentTop += 60;
+
+            // SINAV PANELI (başlangıçta gizli)
             var pnlExam = new Panel
             {
                 Name = "pnlExam",
                 Left = 20,
-                Top = 220,
-                Width = 800,
-                Height = 350,
+                Top = currentTop,
+                Width = 850,
+                Height = 400,
                 Visible = false,
                 BorderStyle = BorderStyle.FixedSingle
             };
+
             tabPageSinav.Controls.AddRange(new Control[]
             {
+                pnlAtamalar,
+                lblExamInfo,
                 pnlRecordStatus,
-                lblLoadExam, btnLoadExam, lblExamInfo,
-                btnStartExam, btnShowSample,
+                btnStartExam,
                 pnlExam
             });
-            // Timer ile kay�t durumunu kontrol et
+
+            // Timer ile kayıt durumunu kontrol et
             var recordCheckTimer = new System.Windows.Forms.Timer { Interval = 1000 };
             recordCheckTimer.Tick += (s, e) => UpdateExamRecordStatus();
             recordCheckTimer.Start();
+
+            // Atanmış sınavları yükle
+            Task.Run(async () => await LoadAtananSinavlarAsync());
         }
-        private void UpdateExamRecordStatus()
+
+        /// <summary>
+        /// Yönetici - Kullanıcıya sınav atama formu
+        /// </summary>
+        private void BtnSinavAta_Click(object sender, EventArgs e)
         {
-            var lblStatus = tabPageSinav.Controls.Find("lblRecordStatus", true).FirstOrDefault() as Label;
-            if (lblStatus == null) return;
-            if (_streamingSessionId.HasValue)
+            try
             {
-                lblStatus.Text = $"?? EEG Kaydı AKTİF - Oturum #{_streamingSessionId.Value}";
-                lblStatus.ForeColor = System.Drawing.Color.Green;
-                
-                var btnStart = tabPageSinav.Controls.Find("btnStartExam", true).FirstOrDefault() as Button;
-                if (btnStart != null)
-                    btnStart.Enabled = _loadedExam != null;
+                using (var form = new SinavAtamaForm(_currentUserId))
+                {
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        MessageBox.Show(this, 
+                            "Sınav başarıyla atandı!",
+                            "Başarılı", 
+                            MessageBoxButtons.OK, 
+                            MessageBoxIcon.Information);
+
+                        // Audit log
+                        Task.Run(async () => await _auditLogService.LogAsync(
+                            islem: "SinavAtandi",
+                            detay: $"Yönetici tarafından sınav atandı",
+                            kullaniciId: _currentUserId,
+                            kullaniciAdi: _currentUserName
+                        ));
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                lblStatus.Text = "?? EEG Kaydı YOK - Önce EEG Verisi sekmesinden kayıt başlatın";
-                lblStatus.ForeColor = System.Drawing.Color.Red;
-                
-                var btnStart = tabPageSinav.Controls.Find("btnStartExam", true).FirstOrDefault() as Button;
-                if (btnStart != null)
-                    btnStart.Enabled = false;
+                MessageBox.Show(this, 
+                    $"Sınav atanırken hata oluştu:\n{ex.Message}",
+                    "Hata", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Error);
             }
         }
-        private void BtnLoadExam_Click(object sender, EventArgs e)
+
+        /// <summary>
+        /// Yönetici - Tüm sınav atamalarını görüntüle
+        /// </summary>
+        private void BtnAtamalariGor_Click(object sender, EventArgs e)
         {
-            using (var openDialog = new OpenFileDialog
+            try
             {
-                Title = "Sınav JSON Dosyası Seç",
-                Filter = "JSON (*.json)|*.json"
-            })
+                using (var form = new SinavAtamaListForm(_currentUserId))
+                {
+                    form.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
             {
-                if (openDialog.ShowDialog(this) != DialogResult.OK)
-                    return;
+                MessageBox.Show(this, 
+                    $"Atamalar görüntülenirken hata oluştu:\n{ex.Message}",
+                    "Hata", 
+                    MessageBoxButtons.OK, 
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task LoadAtananSinavlarAsync()
+        {
+            try
+            {
+                var atamalar = await _sinavAtamaService.GetPendingByUserAsync(_currentUserId);
+
+                var listAtamalar = tabPageSinav.Controls.Find("listAtamalar", true).FirstOrDefault() as ListBox;
+                if (listAtamalar != null)
+                {
+                    listAtamalar.Invoke((MethodInvoker)delegate
+                    {
+                        listAtamalar.Items.Clear();
+                        listAtamalar.DisplayMember = "Display";
+                        listAtamalar.ValueMember = "Value";
+
+                        foreach (var atama in atamalar)
+                        {
+                            var display = $"{atama.SinavAdi} - {atama.SinavAciklama ?? ""}";
+                            if (atama.SonGecerlilikTarihi.HasValue)
+                            {
+                                display += $" (Son: {atama.SonGecerlilikTarihi.Value:dd.MM.yyyy})";
+                            }
+
+                            listAtamalar.Items.Add(new { Display = display, Value = atama });
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"Atamalar yüklenirken hata: {ex.Message}",
+                    "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ListAtamalar_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var list = sender as ListBox;
+            if (list?.SelectedItem == null) return;
+
+            dynamic item = list.SelectedItem;
+            _currentAtama = item.Value as SinavAtama;
+
+            if (_currentAtama != null)
+            {
                 try
                 {
-                    _loadedExam = _examLoaderService.LoadFromJson(openDialog.FileName);
+                    // JSON içerikten veya dosyadan yükle
+                    if (!string.IsNullOrWhiteSpace(_currentAtama.SinavJsonContent))
+                    {
+                        _loadedExam = JsonConvert.DeserializeObject<ExamData>(_currentAtama.SinavJsonContent);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(_currentAtama.SinavJsonPath))
+                    {
+                        _loadedExam = _examLoaderService.LoadFromJson(_currentAtama.SinavJsonPath);
+                    }
+
                     var lblInfo = tabPageSinav.Controls.Find("lblExamInfo", true).FirstOrDefault() as Label;
                     if (lblInfo != null)
                     {
-                        lblInfo.Text = $"? {_loadedExam.SinavTuru} ({_loadedExam.Sorular.Count} soru)";
+                        lblInfo.Text = $"✓ {_currentAtama.SinavAdi} ({_loadedExam.Sorular.Count} soru)";
                         lblInfo.ForeColor = System.Drawing.Color.Green;
                     }
-                    UpdateExamRecordStatus(); // Buton durumunu g�ncelle
+
+                    UpdateExamRecordStatus();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, $"Sınav yüklenemedi: {ex.Message}", 
+                    MessageBox.Show(this, $"Sınav yüklenirken hata: {ex.Message}",
                         "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
+
+        private void UpdateExamRecordStatus()
+        {
+            var lblStatus = tabPageSinav.Controls.Find("lblRecordStatus", true).FirstOrDefault() as Label;
+            var btnStart = tabPageSinav.Controls.Find("btnStartExam", true).FirstOrDefault() as Button;
+
+            if (lblStatus == null || btnStart == null) return;
+
+            if (_streamingSessionId.HasValue)
+            {
+                lblStatus.Text = $"✅ EEG kaydı AKTIF - Oturum #{_streamingSessionId.Value}";
+                lblStatus.ForeColor = System.Drawing.Color.Green;
+                btnStart.Enabled = _loadedExam != null;
+            }
+            else
+            {
+                lblStatus.Text = "⚠️ EEG kaydı YOK - Önce EEG Verisi sekmesinden kayıt başlatın";
+                lblStatus.ForeColor = System.Drawing.Color.Red;
+                btnStart.Enabled = false;
+            }
+        }
+
         private void BtnStartExam_Click(object sender, EventArgs e)
         {
             if (!_streamingSessionId.HasValue)
             {
-                MessageBox.Show(this, "Önce EEG Verisi sekmesinden kayıt baŞlatın!", 
-                    "Uyar�", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Önce EEG Verisi sekmesinden kayıt başlatın!",
+                    "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
             if (_loadedExam == null)
             {
-                MessageBox.Show(this, "Önce bir sınav yÜkleyin!", 
-                    "UyarI", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, "Önce yukarıdan bir sınav seçin!",
+                    "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            // S�nav ba�lat
+
+            // Sınav başlat
             _examStartTime = DateTime.UtcNow;
-            _userAnswers.Clear();
             _currentQuestionIndex = 0;
-            
+            _userAnswers = new Dictionary<int, string>();
+            _questionTimes = new Dictionary<int, int>();
+
             ShowExamPanel();
             LoadExamQuestion(_currentQuestionIndex);
         }
+
         private void ShowExamPanel()
         {
             var pnlExam = tabPageSinav.Controls.Find("pnlExam", true).FirstOrDefault() as Panel;
             if (pnlExam == null) return;
-            
+
             pnlExam.Controls.Clear();
             pnlExam.Visible = true;
+
             // Soru paneli
             var pnlQuestion = new Panel
             {
                 Name = "pnlQuestion",
                 Dock = DockStyle.Fill
             };
-            // Alt panel (butonlar)
+
+            // Alt navigation panel
             var pnlBottom = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 50
+                Height = 60,
+                BackColor = System.Drawing.Color.WhiteSmoke
             };
+
             var btnPrev = new Button
             {
                 Name = "btnPrev",
-                Text = "? Önceki",
+                Text = "◀ Önceki",
                 Left = 10,
-                Top = 5,
-                Width = 100,
+                Top = 10,
+                Width = 120,
                 Height = 40
             };
             btnPrev.Click += (s, e) =>
@@ -2637,23 +2896,37 @@ namespace eegProject
                 if (_currentQuestionIndex > 0)
                     LoadExamQuestion(_currentQuestionIndex - 1);
             };
+
             var lblProgress = new Label
             {
                 Name = "lblProgress",
-                Text = "Soru 1 / " + _loadedExam.Sorular.Count,
-                Left = 120,
-                Top = 15,
+                Text = $"Soru 1 / {_loadedExam.Sorular.Count}",
+                Left = 150,
+                Top = 20,
                 Width = 200,
                 TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
                 Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
             };
+
+            var lblTimer = new Label
+            {
+                Name = "lblTimer",
+                Text = "Süre: 0s",
+                Left = 370,
+                Top = 20,
+                Width = 150,
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+                Font = new System.Drawing.Font("Segoe UI", 10),
+                ForeColor = System.Drawing.Color.Blue
+            };
+
             var btnNext = new Button
             {
                 Name = "btnNext",
-                Text = "Sonraki ?",
-                Left = 330,
-                Top = 5,
-                Width = 100,
+                Text = "Sonraki ▶",
+                Left = 540,
+                Top = 10,
+                Width = 120,
                 Height = 40
             };
             btnNext.Click += (s, e) =>
@@ -2661,182 +2934,359 @@ namespace eegProject
                 if (_currentQuestionIndex < _loadedExam.Sorular.Count - 1)
                     LoadExamQuestion(_currentQuestionIndex + 1);
             };
+
             var btnFinish = new Button
             {
                 Name = "btnFinish",
                 Text = "Sınavı Bitir",
-                Left = 650,
-                Top = 5,
-                Width = 120,
+                Left = 680,
+                Top = 10,
+                Width = 130,
                 Height = 40,
                 BackColor = System.Drawing.Color.LightCoral,
-                Font = new System.Drawing.Font("Segoe UI", 9, System.Drawing.FontStyle.Bold)
+                Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
             };
             btnFinish.Click += BtnFinishExam_Click;
-            pnlBottom.Controls.AddRange(new Control[] { btnPrev, lblProgress, btnNext, btnFinish });
+
+            pnlBottom.Controls.AddRange(new Control[] { btnPrev, lblProgress, lblTimer, btnNext, btnFinish });
+
             pnlExam.Controls.Add(pnlQuestion);
             pnlExam.Controls.Add(pnlBottom);
         }
+
         private void LoadExamQuestion(int index)
         {
-            if (index < 0 || index >= _loadedExam.Sorular.Count)
+            if (_loadedExam == null || index < 0 || index >= _loadedExam.Sorular.Count)
                 return;
+
+            // Önceki sorunun süresini kaydet
+            if (_questionStopwatch.IsRunning)
+            {
+                _questionStopwatch.Stop();
+                var previousQuestion = _loadedExam.Sorular[_currentQuestionIndex];
+                _questionTimes[previousQuestion.SoruNo] = (int)_questionStopwatch.Elapsed.TotalSeconds;
+            }
+
             _currentQuestionIndex = index;
             var question = _loadedExam.Sorular[index];
+
             var pnlExam = tabPageSinav.Controls.Find("pnlExam", true).FirstOrDefault() as Panel;
             var pnlQuestion = pnlExam?.Controls.Find("pnlQuestion", true).FirstOrDefault() as Panel;
             if (pnlQuestion == null) return;
+
             pnlQuestion.Controls.Clear();
+
             // Soru metni
             var lblQuestion = new Label
             {
                 Text = $"Soru {question.SoruNo}: {question.SoruMetni}",
                 Left = 20,
                 Top = 20,
-                Width = 750,
+                Width = 780,
                 Height = 60,
                 Font = new System.Drawing.Font("Segoe UI", 11, System.Drawing.FontStyle.Bold)
             };
             pnlQuestion.Controls.Add(lblQuestion);
-            // ��klar
-            var options = new[] { "A", "B", "C", "D" };
-            var yPos = 90;
-            for (int i = 0; i < question.Siklar.Count && i < 4; i++)
+
+            // Soru tipine göre input
+            int yPos = 100;
+
+            if (question.SoruTipi == "CokSeçmeli")
             {
-                var rb = new RadioButton
+                // Çoktan seçmeli
+                var options = new[] { "A", "B", "C", "D" };
+                for (int i = 0; i < question.Siklar?.Count && i < 4; i++)
                 {
-                    Name = $"rb{options[i]}",
-                    Text = $"{options[i]}) {question.Siklar[i]}",
+                    var rb = new RadioButton
+                    {
+                        Name = $"rb{options[i]}",
+                        Text = $"{options[i]}) {question.Siklar[i]}",
+                        Left = 40,
+                        Top = yPos,
+                        Width = 750,
+                        Height = 30,
+                        Font = new System.Drawing.Font("Segoe UI", 10),
+                        Tag = options[i]
+                    };
+                    rb.CheckedChanged += (s, e) =>
+                    {
+                        if (rb.Checked)
+                            _userAnswers[question.SoruNo] = rb.Tag.ToString();
+                    };
+
+                    if (_userAnswers.TryGetValue(question.SoruNo, out var answer) && answer == options[i])
+                        rb.Checked = true;
+
+                    pnlQuestion.Controls.Add(rb);
+                    yPos += 40;
+                }
+            }
+            else if (question.SoruTipi == "DogruYanlis")
+            {
+                // Doğru-Yanlış
+                var rbDogru = new RadioButton
+                {
+                    Name = "rbDogru",
+                    Text = "✓ Doğru",
                     Left = 40,
                     Top = yPos,
-                    Width = 700,
-                    Height = 35,
+                    Width = 150,
+                    Height = 30,
                     Font = new System.Drawing.Font("Segoe UI", 10),
-                    Tag = options[i]
+                    Tag = "Dogru"
                 };
-                rb.CheckedChanged += (s, e) =>
+                rbDogru.CheckedChanged += (s, e) =>
                 {
-                    if (rb.Checked)
-                        _userAnswers[question.SoruNo] = rb.Tag.ToString();
+                    if (rbDogru.Checked)
+                        _userAnswers[question.SoruNo] = "Dogru";
                 };
-                if (_userAnswers.TryGetValue(question.SoruNo, out var answer) && answer == options[i])
-                    rb.Checked = true;
-                pnlQuestion.Controls.Add(rb);
-                yPos += 45;
+
+                var rbYanlis = new RadioButton
+                {
+                    Name = "rbYanlis",
+                    Text = "✗ Yanlış",
+                    Left = 220,
+                    Top = yPos,
+                    Width = 150,
+                    Height = 30,
+                    Font = new System.Drawing.Font("Segoe UI", 10),
+                    Tag = "Yanlis"
+                };
+                rbYanlis.CheckedChanged += (s, e) =>
+                {
+                    if (rbYanlis.Checked)
+                        _userAnswers[question.SoruNo] = "Yanlis";
+                };
+
+                if (_userAnswers.TryGetValue(question.SoruNo, out var answer))
+                {
+                    if (answer == "Dogru") rbDogru.Checked = true;
+                    if (answer == "Yanlis") rbYanlis.Checked = true;
+                }
+
+                pnlQuestion.Controls.Add(rbDogru);
+                pnlQuestion.Controls.Add(rbYanlis);
             }
-            // Progress g�ncelle
+            else if (question.SoruTipi == "Klasik")
+            {
+                // Klasik (açık uçlu)
+                var txtCevap = new TextBox
+                {
+                    Name = "txtKlasikCevap",
+                    Left = 40,
+                    Top = yPos,
+                    Width = 750,
+                    Height = 120,
+                    Multiline = true,
+                    ScrollBars = ScrollBars.Vertical,
+                    Font = new System.Drawing.Font("Segoe UI", 10)
+                };
+                txtCevap.TextChanged += (s, e) =>
+                {
+                    _userAnswers[question.SoruNo] = txtCevap.Text;
+                };
+
+                if (_userAnswers.TryGetValue(question.SoruNo, out var answer))
+                    txtCevap.Text = answer;
+
+                var lblHint = new Label
+                {
+                    Text = "💡 Anahtar kelimeler: " + string.Join(", ", question.AnahtarKelimeler ?? new List<string>()),
+                    Left = 40,
+                    Top = yPos + 130,
+                    Width = 750,
+                    Height = 30,
+                    ForeColor = System.Drawing.Color.Gray,
+                    Font = new System.Drawing.Font("Segoe UI", 9, System.Drawing.FontStyle.Italic)
+                };
+
+                pnlQuestion.Controls.Add(txtCevap);
+                pnlQuestion.Controls.Add(lblHint);
+            }
+
+            // Progress güncelle
             var lblProgress = pnlExam.Controls.Find("lblProgress", true).FirstOrDefault() as Label;
             if (lblProgress != null)
                 lblProgress.Text = $"Soru {index + 1} / {_loadedExam.Sorular.Count}";
-            // Buton durumlar�
+
+            // Buton durumları
             var btnPrev = pnlExam.Controls.Find("btnPrev", true).FirstOrDefault() as Button;
             var btnNext = pnlExam.Controls.Find("btnNext", true).FirstOrDefault() as Button;
             if (btnPrev != null) btnPrev.Enabled = index > 0;
             if (btnNext != null) btnNext.Enabled = index < _loadedExam.Sorular.Count - 1;
+
+            // Soru süresini başlat
+            _questionStopwatch.Restart();
+
+            // Süre göstergesini güncelle
+            var lblTimer = pnlExam.Controls.Find("lblTimer", true).FirstOrDefault() as Label;
+            if (lblTimer != null)
+            {
+                var timerUpdate = new System.Windows.Forms.Timer { Interval = 1000 };
+                timerUpdate.Tick += (s, e) =>
+                {
+                    if (_questionStopwatch.IsRunning)
+                    {
+                        var elapsed = (int)_questionStopwatch.Elapsed.TotalSeconds;
+                        lblTimer.Text = $"Süre: {elapsed}s";
+
+                        // Maksimum süre kontrolü
+                        if (question.MaxSure.HasValue && elapsed >= question.MaxSure.Value)
+                        {
+                            lblTimer.ForeColor = System.Drawing.Color.Red;
+                            lblTimer.Text = $"Süre: {elapsed}s ⚠️ (Maks: {question.MaxSure.Value}s)";
+                        }
+                    }
+                };
+                timerUpdate.Start();
+            }
         }
+
         private async void BtnFinishExam_Click(object sender, EventArgs e)
         {
+            if (_loadedExam == null) return;
+
+            // Son sorunun süresini kaydet
+            if (_questionStopwatch.IsRunning)
+            {
+                _questionStopwatch.Stop();
+                var lastQuestion = _loadedExam.Sorular[_currentQuestionIndex];
+                _questionTimes[lastQuestion.SoruNo] = (int)_questionStopwatch.Elapsed.TotalSeconds;
+            }
+
             var unanswered = _loadedExam.Sorular.Count - _userAnswers.Count;
             if (unanswered > 0)
             {
                 var result = MessageBox.Show(this,
-                    $"{unanswered} soru cevaplanmadi. Yine de bitirmek istiyor musunuz?",
-                    "Uyari", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    $"{unanswered} soru cevaplanmadı. Yine de bitirmek istiyor musunuz?",
+                    "Uyarı", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
                 if (result != DialogResult.Yes)
                     return;
             }
+
             try
             {
-                // Sonu�lar� hesapla
-                var dogruSayisi = 0;
-                var yanlisSayisi = 0;
-                var answers = new List<ExamAnswer>();
+                this.Cursor = Cursors.WaitCursor;
+
+                // İstatistikleri hesapla
+                var stats = new SinavCevapStatistics
+                {
+                    ToplamSoru = _loadedExam.Sorular.Count,
+                    DogruSayisi = 0,
+                    YanlisSayisi = 0,
+                    BosSayisi = 0,
+                    ToplamPuan = _loadedExam.Sorular.Sum(s => s.ToplamPuan),
+                    AlinanPuan = 0,
+                    CokSeçmeliSayisi = _loadedExam.Sorular.Count(s => s.SoruTipi == "CokSeçmeli"),
+                    DogruYanlisSayisi = _loadedExam.Sorular.Count(s => s.SoruTipi == "DogruYanlis"),
+                    KlasikSayisi = _loadedExam.Sorular.Count(s => s.SoruTipi == "Klasik")
+                };
+
+                // SinavSonucu oluştur
+                var sinavSonucu = await _examService.CreateFromStatisticsAsync(
+                    _streamingSessionId.Value,
+                    _currentAtama?.AtamaID,
+                    _loadedExam.SinavTuru,
+                    stats,
+                    _examStartTime,
+                    DateTime.UtcNow,
+                    analizeEkle: true
+                );
+
+                // Her soru için detaylı cevap kaydet
                 foreach (var question in _loadedExam.Sorular)
                 {
-                    var userAnswer = _userAnswers.ContainsKey(question.SoruNo)
-                        ? _userAnswers[question.SoruNo] : null;
-                    var answer = new ExamAnswer
-                    {
-                        SoruNo = question.SoruNo,
-                        VerilenCevap = userAnswer,
-                        DogruCevap = question.DogruCevap
-                    };
-                    answers.Add(answer);
-                    if (answer.Dogru)
-                        dogruSayisi++;
-                    else if (userAnswer != null)
-                        yanlisSayisi++;
+                    _userAnswers.TryGetValue(question.SoruNo, out var userAnswer);
+                    _questionTimes.TryGetValue(question.SoruNo, out var time);
+
+                    var cevap = await _sinavCevapService.CreateAsync(
+                        sinavSonucu.SinavSonucuID,
+                        question.SoruNo,
+                        question.SoruTipi,
+                        question.SoruMetni,
+                        question.DogruCevap,
+                        userAnswer,
+                        time > 0 ? time : (int?)null,
+                        question.ToplamPuan,
+                        question.AnahtarKelimeler
+                    );
+
+                    // İstatistikleri güncelle
+                    if (cevap.DogruMu)
+                        stats.DogruSayisi++;
+                    else if (!string.IsNullOrWhiteSpace(userAnswer))
+                        stats.YanlisSayisi++;
+                    else
+                        stats.BosSayisi++;
+
+                    if (cevap.AlinanPuan.HasValue)
+                        stats.AlinanPuan += cevap.AlinanPuan.Value;
                 }
-                // Veritaban�na kaydet
-                var sureDakika = (int)(DateTime.UtcNow - _examStartTime).TotalMinutes;
-                var examResult = new SinavSonucu
+
+                // İstatistikleri hesapla ve güncelle
+                stats.BasariYuzdesi = stats.ToplamSoru > 0 ? (stats.DogruSayisi * 100.0 / stats.ToplamSoru) : 0;
+                stats.OrtalamaCevapSuresi = _questionTimes.Count > 0 ? _questionTimes.Values.Average() : 0;
+
+                // SinavSonucu'yu güncelle
+                sinavSonucu.DogruSayisi = stats.DogruSayisi;
+                sinavSonucu.YanlisSayisi = stats.YanlisSayisi;
+                sinavSonucu.ToplamPuan = stats.ToplamPuan;
+                sinavSonucu.AlinanPuan = stats.AlinanPuan;
+                sinavSonucu.BasariYuzdesi = stats.BasariYuzdesi;
+                sinavSonucu.OrtalamaCevapSuresi = stats.OrtalamaCevapSuresi;
+                sinavSonucu.CokSeçmeliSayisi = stats.CokSeçmeliSayisi;
+                sinavSonucu.KlasikSoruSayisi = stats.KlasikSayisi;
+
+                // Atamayı tamamlandı işaretle
+                if (_currentAtama != null)
                 {
-                    OturumID = _streamingSessionId.Value,
-                    SinavTuru = _loadedExam.SinavTuru,
-                    ToplamSoru = _loadedExam.Sorular.Count,
-                    DogruSayisi = dogruSayisi,
-                    YanlisSayisi = yanlisSayisi,
-                    BaslamaTarihi = _examStartTime,
-                    BitisTarihi = DateTime.UtcNow,
-                    Sure = $"{sureDakika} dakika"
-                };
-                await _examService.CreateAsync(examResult);
-                // ? OTOMATIK KAYIT DURDUR
+                    await _sinavAtamaService.MarkAsCompletedAsync(_currentAtama.AtamaID);
+                }
+
+                // EEG kaydını durdur
                 if (_streamingSessionId.HasValue)
                 {
-                    await StopEegStreamingAsync();
+                    await StopStreamAsync("Sınav tamamlandı");
                 }
-                // Sonu�lar� g�ster
-                ShowExamResults(answers, dogruSayisi, yanlisSayisi);
-                // S�nav panelini gizle
+
+                this.Cursor = Cursors.Default;
+
+                // Sonuçları göster
+                var cevaplar = await _sinavCevapService.GetByExamResultAsync(sinavSonucu.SinavSonucuID);
+                ShowExamResults(cevaplar, stats);
+
+                // Sınav panelini gizle
                 var pnlExam = tabPageSinav.Controls.Find("pnlExam", true).FirstOrDefault() as Panel;
                 if (pnlExam != null)
                     pnlExam.Visible = false;
-                MessageBox.Show(this, 
-                    "Sınav tamamlandı ve EEG kaydı durduruldu!", 
-                    "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Atamaları yenile
+                await LoadAtananSinavlarAsync();
+
+                MessageBox.Show(this,
+                    "Sınav tamamlandı ve EEG kaydı durduruldu!\n\n" +
+                    $"Başarı: %{stats.BasariYuzdesi:F1}\n" +
+                    $"Alınan Puan: {stats.AlinanPuan:F1} / {stats.ToplamPuan}",
+                    "Başarılı", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Hata: {ex.Message}", 
+                this.Cursor = Cursors.Default;
+                MessageBox.Show(this, $"Sınav kaydedilirken hata:\n{ex.Message}",
                     "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private async Task StopEegStreamingAsync()
-        {
-            if (_streamCts != null)
-            {
-                _streamCts.Cancel();
-                if (_streamTask != null)
-                {
-                    try
-                    {
-                        await _streamTask;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Expected
-                    }
-                }
-                _streamCts?.Dispose();
-                _streamCts = null;
-                _streamTask = null;
-            }
-            if (_streamingSessionId.HasValue)
-            {
-                await _sessionService.UpdateRecordEndAsync(_streamingSessionId.Value, DateTime.UtcNow);
-                _streamingSessionId = null;
-            }
-            UpdateStreamStatus("Durduruldu");
-        }
-        private void ShowExamResults(List<ExamAnswer> answers, int dogru, int yanlis)
+
+        private void ShowExamResults(List<SinavCevap> cevaplar, SinavCevapStatistics stats)
         {
             var form = new Form
             {
                 Text = "Sınav Sonuçları",
-                Size = new System.Drawing.Size(600, 500),
+                Size = new System.Drawing.Size(700, 600),
                 StartPosition = FormStartPosition.CenterParent
             };
+
             var txt = new TextBox
             {
                 Multiline = true,
@@ -2845,31 +3295,55 @@ namespace eegProject
                 ReadOnly = true,
                 Font = new System.Drawing.Font("Consolas", 10)
             };
+
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine("=======================================");
-            sb.AppendLine("           SINAV SONUÇLARI");
-            sb.AppendLine("=======================================");
+            sb.AppendLine("╔" + new string('═', 60) + "╗");
+            sb.AppendLine("║" + "           SINAV SONUÇLARI".PadLeft(35).PadRight(60) + "║");
+            sb.AppendLine("╚" + new string('═', 60) + "╝");
             sb.AppendLine();
-            sb.AppendLine($"Toplam Soru: {_loadedExam.Sorular.Count}");
-            sb.AppendLine($"Doğru: {dogru}");
-            sb.AppendLine($"Yanlış: {yanlis}");
-            sb.AppendLine($"Boş: {_loadedExam.Sorular.Count - dogru - yanlis}");
-            sb.AppendLine($"Başarı: %{(dogru * 100.0 / _loadedExam.Sorular.Count):F1}");
+            sb.AppendLine($"Sınav: {_loadedExam.SinavTuru}");
+            sb.AppendLine($"Tarih: {DateTime.Now:dd.MM.yyyy HH:mm}");
             sb.AppendLine();
-            sb.AppendLine("�������������������������������������");
+            sb.AppendLine("─────────────────────────────────────────────────────");
+            sb.AppendLine($"Toplam Soru   : {stats.ToplamSoru}");
+            sb.AppendLine($"Doğru         : {stats.DogruSayisi}");
+            sb.AppendLine($"Yanlış        : {stats.YanlisSayisi}");
+            sb.AppendLine($"Boş           : {stats.BosSayisi}");
+            sb.AppendLine();
+            sb.AppendLine($"Başarı Oranı  : %{stats.BasariYuzdesi:F1}");
+            sb.AppendLine($"Alınan Puan   : {stats.AlinanPuan:F1} / {stats.ToplamPuan}");
+            sb.AppendLine($"Ort. Süre     : {stats.OrtalamaCevapSuresi:F0} saniye/soru");
+            sb.AppendLine("─────────────────────────────────────────────────────");
+            sb.AppendLine();
             sb.AppendLine("DETAYLI SONUÇLAR:");
-            sb.AppendLine("�������������������������������������");
-            foreach (var answer in answers)
+            sb.AppendLine();
+
+            foreach (var cevap in cevaplar.OrderBy(c => c.SoruNo))
             {
-                var status = answer.VerilenCevap == null ? "BOS" :
-                            answer.Dogru ? "DOGRU" : "YANLIS";
-                var icon = answer.VerilenCevap == null ? "?" :
-                          answer.Dogru ? "?" : "?";
-                sb.AppendLine($"{icon} Soru {answer.SoruNo}: {status}");
-                if (answer.VerilenCevap != null)
-                    sb.AppendLine($"  Cevabınız: {answer.VerilenCevap} | Doğru: {answer.DogruCevap}");
+                string icon = cevap.DogruMu ? "[✓]" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "[ ]" : "[✗]";
+                string status = cevap.DogruMu ? "DOĞRU" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "BOŞ" : "YANLIŞ";
+
+                sb.AppendLine($"{icon} Soru {cevap.SoruNo} ({cevap.SoruTipi}): {status}");
+
+                if (cevap.SoruTipi == "Klasik" && cevap.EslesmeYuzdesi.HasValue)
+                {
+                    sb.AppendLine($"    Eşleşme: %{cevap.EslesmeYuzdesi:F0} - Puan: {cevap.AlinanPuan:F1}/{cevap.ToplamPuan}");
+                }
+                else if (!string.IsNullOrWhiteSpace(cevap.VerilenCevap))
+                {
+                    sb.AppendLine($"    Cevabınız: {cevap.VerilenCevap} | Doğru: {cevap.DogruCevap}");
+                }
+
+                if (cevap.CevaplamaSuresi.HasValue)
+                {
+                    sb.AppendLine($"    Süre: {cevap.CevaplamaSuresi.Value} saniye");
+                }
+
+                sb.AppendLine();
             }
+
             txt.Text = sb.ToString();
+
             var btnClose = new Button
             {
                 Text = "Kapat",
@@ -2877,19 +3351,23 @@ namespace eegProject
                 Height = 40,
                 DialogResult = DialogResult.OK
             };
+
             form.Controls.Add(txt);
             form.Controls.Add(btnClose);
             form.ShowDialog(this);
         }
+
         private void BtnShowSampleJson_Click(object sender, EventArgs e)
         {
             var sample = _examLoaderService.GetSampleJsonFormat();
+
             var form = new Form
             {
-                Text = "JSON Format örneğii",
-                Size = new System.Drawing.Size(600, 500),
+                Text = "JSON Format Örneği",
+                Size = new System.Drawing.Size(700, 600),
                 StartPosition = FormStartPosition.CenterParent
             };
+
             var txt = new TextBox
             {
                 Text = sample,
@@ -2899,6 +3377,7 @@ namespace eegProject
                 Font = new System.Drawing.Font("Consolas", 9),
                 ReadOnly = true
             };
+
             var btnSave = new Button
             {
                 Text = "Dosyaya Kaydet",
@@ -2920,14 +3399,70 @@ namespace eegProject
                     }
                 }
             };
+
             form.Controls.Add(txt);
             form.Controls.Add(btnSave);
             form.ShowDialog(this);
         }
+
+        /// <summary>
+        /// EEG streaming'i durdurur ve oturum kaydını günceller
+        /// </summary>
+        private async Task StopStreamAsync(string reason = null)
+        {
+            // Cancel streaming task
+            if (_streamCts != null)
+            {
+                _streamCts.Cancel();
+                if (_streamTask != null)
+                {
+                    try
+                    {
+                        await _streamTask;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected cancellation
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't throw
+                        System.Diagnostics.Debug.WriteLine($"Stream task error: {ex.Message}");
+                    }
+                }
+                _streamCts?.Dispose();
+                _streamCts = null;
+                _streamTask = null;
+            }
+
+            // Update session record
+            if (_streamingSessionId.HasValue)
+            {
+                try
+                {
+                    await _sessionService.UpdateRecordEndAsync(_streamingSessionId.Value, DateTime.UtcNow);
+                    await _auditLogService.LogAsync(
+                        islem: $"EEG kaydı durduruldu (Oturum #{_streamingSessionId.Value})" + 
+                               (reason != null ? $" - {reason}" : ""),
+                        kullaniciId: _currentUserId
+                    );
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, $"Oturum güncellenirken hata: {ex.Message}",
+                        "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                _streamingSessionId = null;
+            }
+        }
+
         #endregion
-        #region Mod�l Yetkileri
+
+        #region MODULE PERMISSIONS - Modül Yetkileri Yönetimi
+
         private DataGridView gridModulYetkisi;
         private Button btnSaveModulYetkisi;
+
         private void InitializeModulYetkisiTab()
         {
             // Yeni tab olu�tur
@@ -3093,7 +3628,11 @@ namespace eegProject
                 Cursor = Cursors.Default;
             }
         }
+
         #endregion
+
+        #region HELPER CLASSES - Yardımcı Data Transfer Objeler
+
         private sealed class AnalysisRow
         {
             public int AnalizID { get; set; }
@@ -3106,10 +3645,21 @@ namespace eegProject
             public string Summary { get; set; }
             public string MetricsJSON { get; set; }
         }
+
+        #endregion
+
+        #region UI HELPERS - UI State ve Helper Metodlar
+
+        private void ShowError(string message, Exception ex)
+        {
+            var errorText = ex?.Message ?? string.Empty;
+            MessageBox.Show(this, $"{message}{Environment.NewLine}{errorText}", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
         private void panelUsersActions_Paint(object sender, PaintEventArgs e)
         {
         }
-        #region Deney T�r� ve Zaman Etiketi Y�netimi
+
         private async void btnManageExperimentTypes_Click(object sender, EventArgs e)
         {
             using (var dialog = new DeneyTuruManageForm())
@@ -3126,7 +3676,6 @@ namespace eegProject
             }
             await LoadLookupAsync();
         }
-        #endregion
 
         private void gridAnalyses_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -3137,5 +3686,13 @@ namespace eegProject
         {
 
         }
+
+        private void gridUsers_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        #endregion
+
     }
 }

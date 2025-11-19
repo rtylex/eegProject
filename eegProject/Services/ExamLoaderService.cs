@@ -32,30 +32,60 @@ namespace eegProject.Services
         {
             var sample = new ExamData
             {
-                SinavTuru = "Matematik",
-                Aciklama = "Temel matematik sorulari",
+                SinavTuru = "Karma Sınav",
+                Aciklama = "Çoktan seçmeli, doğru-yanlış ve klasik sorular içeren örnek sınav",
                 Sorular = new System.Collections.Generic.List<ExamQuestion>
                 {
                     new ExamQuestion
                     {
                         SoruNo = 1,
+                        SoruTipi = "CokSeçmeli",
                         SoruMetni = "2 + 2 kaç eder?",
                         Siklar = new System.Collections.Generic.List<string> { "2", "3", "4", "5" },
-                        DogruCevap = "C"
+                        DogruCevap = "C",
+                        ToplamPuan = 5,
+                        MaxSure = 30
                     },
                     new ExamQuestion
                     {
                         SoruNo = 2,
-                        SoruMetni = "5 x 3 kaç eder?",
-                        Siklar = new System.Collections.Generic.List<string> { "8", "15", "20", "25" },
-                        DogruCevap = "B"
+                        SoruTipi = "DogruYanlis",
+                        SoruMetni = "Dünya güneşin etrafında döner.",
+                        DogruCevap = "Dogru",
+                        ToplamPuan = 3,
+                        MaxSure = 20
                     },
                     new ExamQuestion
                     {
                         SoruNo = 3,
-                        SoruMetni = "10 - 7 kaç eder?",
-                        Siklar = new System.Collections.Generic.List<string> { "1", "2", "3", "4" },
-                        DogruCevap = "C"
+                        SoruTipi = "DogruYanlis",
+                        SoruMetni = "Su 100 derecede kaynar.",
+                        DogruCevap = "Dogru",
+                        ToplamPuan = 3,
+                        MaxSure = 20
+                    },
+                    new ExamQuestion
+                    {
+                        SoruNo = 4,
+                        SoruTipi = "Klasik",
+                        SoruMetni = "Fotosentez nedir? Kısaca açıklayınız.",
+                        AnahtarKelimeler = new System.Collections.Generic.List<string> 
+                        { 
+                            "ışık", "güneş", "klorofil", "oksijen", 
+                            "glikoz", "bitki", "karbon dioksit" 
+                        },
+                        ToplamPuan = 10,
+                        MaxSure = 120
+                    },
+                    new ExamQuestion
+                    {
+                        SoruNo = 5,
+                        SoruTipi = "CokSeçmeli",
+                        SoruMetni = "Türkiye'nin başkenti neresidir?",
+                        Siklar = new System.Collections.Generic.List<string> { "İstanbul", "Ankara", "İzmir", "Bursa" },
+                        DogruCevap = "B",
+                        ToplamPuan = 5,
+                        MaxSure = 30
                     }
                 }
             };

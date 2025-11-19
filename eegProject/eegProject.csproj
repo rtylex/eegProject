@@ -74,17 +74,32 @@
     <Compile Include="DeneyTuru.cs">
       <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
-    <Compile Include="ZamanEtiketi.cs">
-      <DependentUpon>Model1.tt</DependentUpon>
-    </Compile>
-    <Compile Include="EEGVerisi.cs">
-      <DependentUpon>Model1.tt</DependentUpon>
-    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\SinavAtamaForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SinavAtamaListForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Models\SinavCevapStatistics.cs" />
+    <Compile Include="Services\SinavAtamaService.cs" />
+    <Compile Include="Services\SinavCevapService.cs" />
+    <Compile Include="SinavAtama.cs">
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
+    <Compile Include="SinavCevap.cs">
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
+    <Compile Include="ZamanEtiketi.cs">
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
+    <Compile Include="EEGVerisi.cs">
+      <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
     <Compile Include="Services\DbContextFactory.cs" />
     <Compile Include="Services\UserService.cs" />

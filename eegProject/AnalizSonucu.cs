@@ -21,6 +21,8 @@ namespace eegProject
         public string MetricsJSON { get; set; }
         public string Summary { get; set; }
         public System.DateTime AnalizTarihi { get; set; }
+        public bool SinavVerisiDahilMi { get; set; }
+        public string SinavMetricsJson { get; set; }
     
         public virtual Oturum Oturum { get; set; }
     }

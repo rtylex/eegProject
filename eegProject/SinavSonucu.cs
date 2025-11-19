@@ -14,6 +14,12 @@ namespace eegProject
     
     public partial class SinavSonucu
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public SinavSonucu()
+        {
+            this.SinavCevap = new HashSet<SinavCevap>();
+        }
+    
         public int SinavSonucuID { get; set; }
         public int OturumID { get; set; }
         public string SinavTuru { get; set; }
@@ -23,7 +29,19 @@ namespace eegProject
         public System.DateTime BaslamaTarihi { get; set; }
         public Nullable<System.DateTime> BitisTarihi { get; set; }
         public string Sure { get; set; }
+        public Nullable<int> AtamaID { get; set; }
+        public bool AnalizeEkle { get; set; }
+        public string JsonDetay { get; set; }
+        public Nullable<double> OrtalamaCevapSuresi { get; set; }
+        public Nullable<double> ToplamPuan { get; set; }
+        public Nullable<double> AlinanPuan { get; set; }
+        public Nullable<double> BasariYuzdesi { get; set; }
+        public Nullable<int> CokSeçmeliSayisi { get; set; }
+        public Nullable<int> KlasikSoruSayisi { get; set; }
     
         public virtual Oturum Oturum { get; set; }
+        public virtual SinavAtama SinavAtama { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SinavCevap> SinavCevap { get; set; }
     }
 }
