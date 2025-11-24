@@ -76,9 +76,9 @@ namespace eegProject.Services
         /// Çoklu oturum için SINAV VERİSİ DAHİL karşılaştırmalı AI yorumu oluşturur
         /// </summary>
         public async Task<string> GenerateComparativeSummaryWithExamAsync(
-            string userName, 
-            string experimentType, 
-            string analysesJson, 
+            string userName,
+            string experimentType,
+            string analysesJson,
             string examDataJson)
         {
             if (string.IsNullOrWhiteSpace(analysesJson))

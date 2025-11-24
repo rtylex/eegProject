@@ -127,7 +127,7 @@ namespace eegProject
             {
                 // T�m sekmeleri kald�r
                 tabMain.TabPages.Clear();
-
+                
                 // EEG Verisi sekmesini ekle (her kullan�c� g�rebilir)
                 tabMain.TabPages.Add(tabPageEEG);
                 // S�nav Mod�l� yetkisi var m� kontrol et
@@ -516,10 +516,10 @@ namespace eegProject
         private async void Form1_Load(object sender, EventArgs e)
         {
             await LoadLookupAsync();
-
+            
             // Rol bazl� UI yap�land�rmas� (mod�l yetkileri dahil)
             await ConfigureUIByRoleAsync();
-
+            
             bool isAdmin = string.Equals(_currentUserRole, "Admin", StringComparison.OrdinalIgnoreCase);
             bool isYonetici = string.Equals(_currentUserRole, "Yonetici", StringComparison.OrdinalIgnoreCase);
             if (isAdmin || isYonetici)
@@ -540,10 +540,10 @@ namespace eegProject
             UpdateStreamControls(IsStreaming(), "Hazir");
             // Giri� logla
             await _auditLogService.LogAsync(
-                "Giris",
-                $"{_currentUserRole} olarak sisteme giris yapildi",
-                _currentUserId,
-                _currentUserName,
+                "Giris", 
+                $"{_currentUserRole} olarak sisteme giris yapildi", 
+                _currentUserId, 
+                _currentUserName, 
                 "Info"
             );
         }
@@ -620,7 +620,7 @@ namespace eegProject
         {
             var selectedUserId = cmbExportUser.SelectedValue as int?;
             cmbExportSession.Items.Clear();
-
+            
             if (selectedUserId.HasValue)
             {
                 var userSessions = _sessions?.Where(s => s.KullaniciID == selectedUserId.Value).ToList();
@@ -634,7 +634,7 @@ namespace eegProject
             }
             cmbExportSession.DisplayMember = nameof(SessionRow.DisplayName);
             cmbExportSession.ValueMember = nameof(SessionRow.OturumID);
-
+            
             if (cmbExportSession.Items.Count > 0)
             {
                 cmbExportSession.SelectedIndex = 0;
@@ -1148,8 +1148,8 @@ namespace eegProject
                 MessageBox.Show(this, "Oturum olusturmak icin once kullanici ekleyiniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            using (var dialog = new SessionEditForm("Yeni Oturum", _users,
-                _deneyTurleri.Select(d => d.TurAdi).ToList(),
+            using (var dialog = new SessionEditForm("Yeni Oturum", _users, 
+                _deneyTurleri.Select(d => d.TurAdi).ToList(), 
                 _zamanEtiketleri.Select(z => z.EtiketAdi).ToList()))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -1192,8 +1192,8 @@ namespace eegProject
                 KayitBitis = selected.KayitBitis,
                 Notlar = selected.Notlar
             };
-            using (var dialog = new SessionEditForm("Oturum Duzenle", _users,
-                _deneyTurleri.Select(d => d.TurAdi).ToList(),
+            using (var dialog = new SessionEditForm("Oturum Duzenle", _users, 
+                _deneyTurleri.Select(d => d.TurAdi).ToList(), 
                 _zamanEtiketleri.Select(z => z.EtiketAdi).ToList(), existing))
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK)
@@ -1373,36 +1373,36 @@ namespace eegProject
                 MessageBox.Show(this, "Once oturum seciniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            if (IsStreaming())
-            {
-                MessageBox.Show(this, "Zaten bir EEG akisi calisiyor.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-            _streamCts = new CancellationTokenSource();
-            _streamingSessionId = session.OturumID;
-            UpdateStreamControls(true, "Baglaniyor...");
-
-            // Oturuma atanan sınavı otomatik yükle ve listeyi güncelle
-            _ = Task.Run(async () =>
-            {
-                await LoadSessionExamAsync(session.OturumID);
-                await LoadAtananSinavlarAsync(); // Listeyi güncelle - sadece bu oturumun sınavını göster
-            });
-
-            try
-            {
-                _streamTask = _mindwaveStreamService.StartAsync(
-                    sample => HandleEegSampleAsync(session, sample),
-                    UpdateStreamStatus,
-                    _streamCts.Token);
-                // Fire-and-forget continuation
-                _ = _streamTask.ContinueWith(t => OnStreamCompleted(t, session.OturumID), TaskScheduler.FromCurrentSynchronizationContext());
-            }
-            catch (Exception ex)
-            {
-                UpdateStreamControls(false, "Hata");
-                ShowError("EEG akisi baslatilirken hata olustu.", ex);
-            }
+        if (IsStreaming())
+        {
+            MessageBox.Show(this, "Zaten bir EEG akisi calisiyor.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        _streamCts = new CancellationTokenSource();
+        _streamingSessionId = session.OturumID;
+        UpdateStreamControls(true, "Baglaniyor...");
+        
+        // Oturuma atanan sınavı otomatik yükle ve listeyi güncelle
+        _ = Task.Run(async () =>
+        {
+            await LoadSessionExamAsync(session.OturumID);
+            await LoadAtananSinavlarAsync(); // Listeyi güncelle - sadece bu oturumun sınavını göster
+        });
+        
+        try
+        {
+            _streamTask = _mindwaveStreamService.StartAsync(
+                sample => HandleEegSampleAsync(session, sample),
+                UpdateStreamStatus,
+                _streamCts.Token);
+            // Fire-and-forget continuation
+            _ = _streamTask.ContinueWith(t => OnStreamCompleted(t, session.OturumID), TaskScheduler.FromCurrentSynchronizationContext());
+        }
+        catch (Exception ex)
+        {
+            UpdateStreamControls(false, "Hata");
+            ShowError("EEG akisi baslatilirken hata olustu.", ex);
+        }
         }
         private async void btnStopStream_Click(object sender, EventArgs e)
         {
@@ -1431,7 +1431,7 @@ namespace eegProject
             _streamingSessionId = null;
             UpdateStreamControls(false, status);
             _ = LoadEegSamplesAsync(sessionId);
-
+            
             // Sınav listesini güncelle - tüm sınavları tekrar göster
             _ = Task.Run(async () => await LoadAtananSinavlarAsync());
         }
@@ -1471,7 +1471,7 @@ namespace eegProject
         {
             // A��k notlar� kaydet
             await SaveCurrentUserNotesAsync();
-
+            
             await StopStreamAsync("Kapatiliyor");
         }
 
@@ -1530,14 +1530,14 @@ namespace eegProject
                 return;
             }
             var selectedExperiment = cmbExportExperiment.SelectedIndex == 0 ? null : cmbExportExperiment.SelectedItem?.ToString();
-
+            
             IReadOnlyList<string> selectedTimeLabels = null;
             if (!chkAllTimeLabels.Checked)
             {
                 var checkedLabels = lstExportTimeLabels.CheckedItems.Cast<string>()
                     .Select(display => display == "Etiketsiz" ? null : display)
                     .ToList();
-
+                
                 if (checkedLabels.Count == 0)
                 {
                     MessageBox.Show(this, "En az bir zaman etiketi seciniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1597,14 +1597,14 @@ namespace eegProject
         private async Task ExportMultiUserExcelAsync()
         {
             var selectedExperiment = cmbExportExperiment.SelectedIndex == 0 ? null : cmbExportExperiment.SelectedItem?.ToString();
-
+            
             IReadOnlyList<string> selectedTimeLabels = null;
             if (!chkAllTimeLabels.Checked)
             {
                 var checkedLabels = lstExportTimeLabels.CheckedItems.Cast<string>()
                     .Select(display => display == "Etiketsiz" ? null : display)
                     .ToList();
-
+                
                 if (checkedLabels.Count == 0)
                 {
                     MessageBox.Show(this, "En az bir zaman etiketi seciniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1630,7 +1630,7 @@ namespace eegProject
                     Cursor = Cursors.WaitCursor;
                     var userList = _userBindingSource.DataSource as BindingList<Kullanici> ?? _users;
                     var userIds = userList.Select(u => u.KullaniciID).ToList();
-
+                    
                     await _exportService.ExportMultipleUsersToExcelAsync(userIds, selectedExperiment, selectedTimeLabels, saveDialog.FileName);
                     MessageBox.Show(this, "Excel dosyasi basariyla olusturuldu (tum kullanicilar).", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -1675,14 +1675,14 @@ namespace eegProject
                 return;
             }
             var selectedExperiment = cmbExportExperiment.SelectedIndex == 0 ? null : cmbExportExperiment.SelectedItem?.ToString();
-
+            
             IReadOnlyList<string> selectedTimeLabels = null;
             if (!chkAllTimeLabels.Checked)
             {
                 var checkedLabels = lstExportTimeLabels.CheckedItems.Cast<string>()
                     .Select(display => display == "Etiketsiz" ? null : display)
                     .ToList();
-
+                
                 if (checkedLabels.Count == 0)
                 {
                     MessageBox.Show(this, "En az bir zaman etiketi seciniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1739,14 +1739,14 @@ namespace eegProject
         private async Task ExportMultiUserJsonAsync()
         {
             var selectedExperiment = cmbExportExperiment.SelectedIndex == 0 ? null : cmbExportExperiment.SelectedItem?.ToString();
-
+            
             IReadOnlyList<string> selectedTimeLabels = null;
             if (!chkAllTimeLabels.Checked)
             {
                 var checkedLabels = lstExportTimeLabels.CheckedItems.Cast<string>()
                     .Select(display => display == "Etiketsiz" ? null : display)
                     .ToList();
-
+                
                 if (checkedLabels.Count == 0)
                 {
                     MessageBox.Show(this, "En az bir zaman etiketi seciniz.", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1772,7 +1772,7 @@ namespace eegProject
                     Cursor = Cursors.WaitCursor;
                     var userList = _userBindingSource.DataSource as BindingList<Kullanici> ?? _users;
                     var userIds = userList.Select(u => u.KullaniciID).ToList();
-
+                    
                     await _exportService.ExportMultipleUsersToJsonAsync(userIds, selectedExperiment, selectedTimeLabels, saveDialog.FileName);
                     MessageBox.Show(this, "JSON dosyasi basariyla olusturuldu (tum kullanicilar).", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -1939,7 +1939,7 @@ namespace eegProject
                 cmbAnalysisType.Items.Add("Yorgunluk Analizi");
                 cmbAnalysisType.SelectedIndex = 0;
                 var isAiAvailable = _analysisComputationService.IsAiAvailable;
-
+                
                 var chkAI = new CheckBox
                 {
                     Text = isAiAvailable ? "AI Yorumu Ekle (~0.03 TL)" : "AI Yorumu Ekle (API key eksik)",
@@ -1951,7 +1951,7 @@ namespace eegProject
                 };
                 var lblNote = new Label
                 {
-                    Text = isAiAvailable
+                    Text = isAiAvailable 
                         ? "Not: AI yorumu ChatGPT ile olusturulacaktir.\nMaliyet: ~0.03 TL/analiz (GPT-3.5)"
                         : "Not: AI ozelligi icin App.config'e\nOpenAI_ApiKey eklemeniz gerekiyor.",
                     Left = 130,
@@ -1982,32 +1982,32 @@ namespace eegProject
                     SetAnalysisBusyState(true);
                     Cursor = Cursors.WaitCursor;
                     AnalizSonucu result;
-                    string analysisLabel;
-                    switch (selectedAnalysis)
-                    {
-                        case "Rahatlama Analizi":
-                            result = await _analysisComputationService.ComputeRahatlamaAnaliziAsync(selectedSession.OturumID, useAI);
-                            analysisLabel = "Rahatlama";
-                            break;
-                        case "Dikkat Analizi":
-                            result = await _analysisComputationService.ComputeDikkatAnaliziAsync(selectedSession.OturumID, useAI);
-                            analysisLabel = "Dikkat";
-                            break;
-                        case "Engagement Analizi":
-                            result = await _analysisComputationService.ComputeEngagementAnaliziAsync(selectedSession.OturumID, useAI);
-                            analysisLabel = "Engagement";
-                            break;
-                        case "Stres Analizi":
-                            result = await _analysisComputationService.ComputeStresAnaliziAsync(selectedSession.OturumID, useAI);
-                            analysisLabel = "Stres";
-                            break;
-                        case "Yorgunluk Analizi":
-                            result = await _analysisComputationService.ComputeYorgunlukAnaliziAsync(selectedSession.OturumID, useAI);
-                            analysisLabel = "Yorgunluk";
-                            break;
-                        default:
-                            throw new InvalidOperationException("Gecersiz analiz tipi secildi.");
-                    }
+                string analysisLabel;
+                switch (selectedAnalysis)
+                {
+                    case "Rahatlama Analizi":
+                        result = await _analysisComputationService.ComputeRahatlamaAnaliziAsync(selectedSession.OturumID, useAI);
+                        analysisLabel = "Rahatlama";
+                        break;
+                    case "Dikkat Analizi":
+                        result = await _analysisComputationService.ComputeDikkatAnaliziAsync(selectedSession.OturumID, useAI);
+                        analysisLabel = "Dikkat";
+                        break;
+                    case "Engagement Analizi":
+                        result = await _analysisComputationService.ComputeEngagementAnaliziAsync(selectedSession.OturumID, useAI);
+                        analysisLabel = "Engagement";
+                        break;
+                    case "Stres Analizi":
+                        result = await _analysisComputationService.ComputeStresAnaliziAsync(selectedSession.OturumID, useAI);
+                        analysisLabel = "Stres";
+                        break;
+                    case "Yorgunluk Analizi":
+                        result = await _analysisComputationService.ComputeYorgunlukAnaliziAsync(selectedSession.OturumID, useAI);
+                        analysisLabel = "Yorgunluk";
+                        break;
+                    default:
+                        throw new InvalidOperationException("Gecersiz analiz tipi secildi.");
+                }
                     // Veritaban�na kaydet
                     var saved = await _analysisService.CreateAsync(result);
                     // Grid'i yenile
@@ -2433,16 +2433,16 @@ namespace eegProject
                 btnRefreshLogs.Enabled = false;
                 Cursor = Cursors.WaitCursor;
                 await _auditLogService.DeleteAllAsync();
-
+                
                 // Log grid'i temizle
                 _logs.Clear();
-
+                
                 // Temizleme i�lemini logla
                 await _auditLogService.LogAsync("LoglarTemizlendi", "Tum audit loglari temizlendi", _currentUserId, _currentUserName, "Warning");
-
+                
                 // Grid'i yenile
                 await RefreshLogsAsync();
-
+                
                 MessageBox.Show(this, "Tum loglar basariyla temizlendi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -2610,7 +2610,7 @@ namespace eegProject
                 pnlYonetici.Controls.Add(btnSinavSonuclari);
 
                 tabPageSinav.Controls.Add(pnlYonetici);
-
+                
                 // YÖNETİCİ İÇİN BURADA BİTİYOR - KULLANICI PANELLERİ GÖSTERILMEZ
                 return;
             }
@@ -2760,10 +2760,10 @@ namespace eegProject
                 {
                     if (form.ShowDialog(this) == DialogResult.OK)
                     {
-                        MessageBox.Show(this,
+                        MessageBox.Show(this, 
                             "Oturuma sınav başarıyla atandı!",
-                            "Başarılı",
-                            MessageBoxButtons.OK,
+                            "Başarılı", 
+                            MessageBoxButtons.OK, 
                             MessageBoxIcon.Information);
 
                         // Audit log
@@ -2778,10 +2778,10 @@ namespace eegProject
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this,
+                MessageBox.Show(this, 
                     $"Oturuma sınav atanırken hata oluştu:\n{ex.Message}",
-                    "Hata",
-                    MessageBoxButtons.OK,
+                    "Hata", 
+                    MessageBoxButtons.OK, 
                     MessageBoxIcon.Error);
             }
         }
@@ -2800,10 +2800,10 @@ namespace eegProject
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this,
+                MessageBox.Show(this, 
                     $"Atamalar görüntülenirken hata oluştu:\n{ex.Message}",
-                    "Hata",
-                    MessageBoxButtons.OK,
+                    "Hata", 
+                    MessageBoxButtons.OK, 
                     MessageBoxIcon.Error);
             }
         }
@@ -2830,10 +2830,10 @@ namespace eegProject
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this,
+                MessageBox.Show(this, 
                     $"Sınav sonuçları görüntülenirken hata oluştu:\n{ex.Message}",
-                    "Hata",
-                    MessageBoxButtons.OK,
+                    "Hata", 
+                    MessageBoxButtons.OK, 
                     MessageBoxIcon.Error);
             }
         }
@@ -2863,7 +2863,7 @@ namespace eegProject
                             var oturum = oturumAtama.Oturum;
                             var deneyTuru = oturum.DeneyTuru ?? "Genel";
                             var etiket = oturum.ZamanEtiketi ?? "";
-
+                            
                             var display = $"🎯 Bu Oturum: {oturumAtama.SinavAdi}";
                             if (oturumAtama.TamamlandiMi)
                             {
@@ -2901,7 +2901,7 @@ namespace eegProject
                             var tarih = oturum.KayitBaslangic?.ToString("dd.MM.yyyy") ?? "Tarih yok";
                             var deneyTuru = oturum.DeneyTuru ?? "Genel";
                             var etiket = oturum.ZamanEtiketi ?? "";
-
+                            
                             var display = $"🎯 Oturum #{oturum.OturumID} ({deneyTuru}{(string.IsNullOrEmpty(etiket) ? "" : " - " + etiket)}) - {atama.SinavAdi}";
                             if (atama.TamamlandiMi)
                             {
@@ -2995,7 +2995,7 @@ namespace eegProject
                 if (atama != null)
                 {
                     _currentAtama = atama;
-
+                    
                     // JSON içerikten veya dosyadan yükle
                     if (!string.IsNullOrWhiteSpace(atama.SinavJsonContent))
                     {
@@ -3056,7 +3056,7 @@ namespace eegProject
 
             ShowExamPanel();
             LoadExamQuestion(_currentQuestionIndex);
-
+            
             // Toplam sınav timer'ını başlat
             StartTotalExamTimer();
         }
@@ -3065,19 +3065,19 @@ namespace eegProject
         {
             if (_loadedExam?.ToplamSinavSuresiDakika == null || _loadedExam.ToplamSinavSuresiDakika.Value <= 0)
                 return;
-
+            
             var totalMinutes = _loadedExam.ToplamSinavSuresiDakika.Value;
             var totalSeconds = totalMinutes * 60;
-
+            
             var timer = new System.Windows.Forms.Timer { Interval = 1000 };
             timer.Tick += (s, e) =>
             {
                 var elapsed = (DateTime.UtcNow - _examStartTime).TotalSeconds;
                 var remaining = totalSeconds - (int)elapsed;
-
+                
                 var pnlExam = tabPageSinav.Controls.Find("pnlExam", true).FirstOrDefault() as Panel;
                 var lblTotalTimer = pnlExam?.Controls.Find("lblTotalTimer", true).FirstOrDefault() as Label;
-
+                
                 if (lblTotalTimer != null)
                 {
                     if (remaining > 0)
@@ -3085,7 +3085,7 @@ namespace eegProject
                         var mins = remaining / 60;
                         var secs = remaining % 60;
                         lblTotalTimer.Text = $"Toplam Kalan: {mins}:{secs:00}";
-
+                        
                         // Son 30 saniyede sarı
                         if (remaining <= 30)
                         {
@@ -3104,7 +3104,7 @@ namespace eegProject
                         timer.Stop();
                         lblTotalTimer.Text = "Süre Doldu!";
                         lblTotalTimer.ForeColor = System.Drawing.Color.Red;
-
+                        
                         // Otomatik olarak sınavı bitir
                         this.Invoke(new Action(() => {
                             MessageBox.Show(this, "Sınav süresi doldu! Sınav otomatik olarak bitirilecek.",
@@ -3116,7 +3116,7 @@ namespace eegProject
             };
             timer.Start();
         }
-
+        
         private void ShowExamPanel()
         {
             var pnlExam = tabPageSinav.Controls.Find("pnlExam", true).FirstOrDefault() as Panel;
@@ -3177,7 +3177,7 @@ namespace eegProject
                 Font = new System.Drawing.Font("Segoe UI", 10),
                 ForeColor = System.Drawing.Color.Blue
             };
-
+            
             // Toplam sınav süresi label'ı
             var lblTotalTimer = new Label
             {
@@ -3236,7 +3236,7 @@ namespace eegProject
             {
                 _questionStopwatch.Stop();
                 var previousQuestion = _loadedExam.Sorular[_currentQuestionIndex];
-
+                
                 // Birikimli olarak ekle (override değil)
                 if (_questionTimes.ContainsKey(previousQuestion.SoruNo))
                     _questionTimes[previousQuestion.SoruNo] += (int)_questionStopwatch.Elapsed.TotalSeconds;
@@ -3246,7 +3246,7 @@ namespace eegProject
 
             _currentQuestionIndex = index;
             var question = _loadedExam.Sorular[index];
-
+            
             // Bu sorunun daha önce harcanan süresini al
             var previousTimeSpent = _questionTimes.ContainsKey(question.SoruNo) ? _questionTimes[question.SoruNo] : 0;
 
@@ -3410,11 +3410,11 @@ namespace eegProject
                     limitSure = _loadedExam.HerDogruYanlisSoruSuresiSaniye.Value;
                 else if (_loadedExam.HerKlasikSoruSuresiSaniye.HasValue && question.SoruTipi == "Klasik")
                     limitSure = _loadedExam.HerKlasikSoruSuresiSaniye.Value;
-
+                
                 // Eski MaxSure sistemi için geriye uyumluluk
                 if (!limitSure.HasValue && question.MaxSure.HasValue)
                     limitSure = question.MaxSure.Value;
-
+                
                 var timerUpdate = new System.Windows.Forms.Timer { Interval = 1000 };
                 timerUpdate.Tick += (s, e) =>
                 {
@@ -3422,12 +3422,12 @@ namespace eegProject
                     {
                         // Toplam süre = önceki + şimdiki
                         var totalElapsed = previousTimeSpent + (int)_questionStopwatch.Elapsed.TotalSeconds;
-
+                        
                         if (limitSure.HasValue)
                         {
                             // Limit varsa göster
                             lblTimer.Text = $"Bu soru için: {totalElapsed}/{limitSure.Value}sn";
-
+                            
                             // Limit aşıldıysa kırmızı yap
                             if (totalElapsed > limitSure.Value)
                             {
@@ -3464,7 +3464,7 @@ namespace eegProject
             {
                 _questionStopwatch.Stop();
                 var lastQuestion = _loadedExam.Sorular[_currentQuestionIndex];
-
+                
                 // Birikimli olarak ekle
                 if (_questionTimes.ContainsKey(lastQuestion.SoruNo))
                     _questionTimes[lastQuestion.SoruNo] += (int)_questionStopwatch.Elapsed.TotalSeconds;
@@ -3556,7 +3556,7 @@ namespace eegProject
                 sinavSonucu.CokSeçmeliSayisi = stats.CokSeçmeliSayisi;
                 sinavSonucu.KlasikSoruSayisi = stats.KlasikSayisi;
                 sinavSonucu.DogruYanlisSayisi = stats.DogruYanlisSayisi;
-
+                
                 // Süre limitlerini JsonDetay'a kaydet
                 var timeLimits = new
                 {
@@ -3565,7 +3565,7 @@ namespace eegProject
                     true_false_seconds_per_question = _loadedExam.HerDogruYanlisSoruSuresiSaniye,
                     classic_seconds_per_question = _loadedExam.HerKlasikSoruSuresiSaniye
                 };
-
+                
                 sinavSonucu.JsonDetay = JsonConvert.SerializeObject(new
                 {
                     time_limits = timeLimits
@@ -3646,7 +3646,7 @@ namespace eegProject
             sb.AppendLine($"Başarı Oranı  : %{stats.BasariYuzdesi:F1}");
             sb.AppendLine($"Alınan Puan   : {stats.AlinanPuan:F1} / {stats.ToplamPuan}");
             sb.AppendLine($"Ort. Süre     : {stats.OrtalamaCevapSuresi:F0} saniye/soru");
-
+            
             // Toplam sınav süresi bilgisi
             if (_loadedExam.ToplamSinavSuresiDakika.HasValue)
             {
@@ -3655,7 +3655,7 @@ namespace eegProject
                 var status = actualDuration <= totalMinutes ? "✓" : "⚠️ LİMİT AŞILDI";
                 sb.AppendLine($"Sınav Süresi  : {actualDuration:F1} / {totalMinutes} dk {status}");
             }
-
+            
             sb.AppendLine("─────────────────────────────────────────────────────");
             sb.AppendLine();
             sb.AppendLine("DETAYLI SONUÇLAR:");
@@ -3687,7 +3687,7 @@ namespace eegProject
                         limitSure = _loadedExam.HerDogruYanlisSoruSuresiSaniye.Value;
                     else if (cevap.SoruTipi == "Klasik" && _loadedExam.HerKlasikSoruSuresiSaniye.HasValue)
                         limitSure = _loadedExam.HerKlasikSoruSuresiSaniye.Value;
-
+                    
                     if (limitSure.HasValue)
                     {
                         var timeStatus = cevap.CevaplamaSuresi.Value <= limitSure.Value ? "✅" : "⚠️ LİMİT AŞILDI";
@@ -3802,7 +3802,7 @@ namespace eegProject
                 {
                     await _sessionService.UpdateRecordEndAsync(_streamingSessionId.Value, DateTime.UtcNow);
                     await _auditLogService.LogAsync(
-                        islem: $"EEG kaydı durduruldu (Oturum #{_streamingSessionId.Value})" +
+                        islem: $"EEG kaydı durduruldu (Oturum #{_streamingSessionId.Value})" + 
                                (reason != null ? $" - {reason}" : ""),
                         kullaniciId: _currentUserId
                     );
@@ -3813,7 +3813,7 @@ namespace eegProject
                         "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 _streamingSessionId = null;
-
+                
                 // Sınav listesini güncelle - tüm sınavları tekrar göster
                 await LoadAtananSinavlarAsync();
             }

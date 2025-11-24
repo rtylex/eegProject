@@ -18,7 +18,7 @@ namespace eegProject.Forms
         private readonly ExamService _examService = new ExamService();
         private readonly SinavCevapService _sinavCevapService = new SinavCevapService();
         private readonly int _currentUserId;
-
+        
         private ListBox lstUsers;
         private TreeView treeOturumlar;
         private Panel pnlOzet;
@@ -32,7 +32,7 @@ namespace eegProject.Forms
         private Label lblBos;
         private Button btnDetayliRapor;
         private Button btnSoruAnalizi;
-
+        
         private SinavSonucu _selectedExam;
 
         public SinavSonucRaporForm(int currentUserId)
@@ -45,18 +45,11 @@ namespace eegProject.Forms
 
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // SinavSonucRaporForm
-            // 
-            this.ClientSize = new System.Drawing.Size(1182, 653);
-            this.MinimumSize = new System.Drawing.Size(1000, 600);
-            this.Name = "SinavSonucRaporForm";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Sınav Sonuçları Yönetimi";
-            this.Load += new System.EventHandler(this.SinavSonucRaporForm_Load);
-            this.ResumeLayout(false);
-
+            this.Size = new Size(1200, 700);
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.MinimumSize = new Size(1000, 600);
         }
 
         private void InitializeCustomComponents()
@@ -223,7 +216,7 @@ namespace eegProject.Forms
             {
                 var users = await _userService.GetAllAsync();
                 lstUsers.Items.Clear();
-
+                
                 foreach (var user in users.OrderBy(u => u.AdSoyad))
                 {
                     lstUsers.Items.Add(user);
@@ -275,12 +268,12 @@ namespace eegProject.Forms
                 {
                     var firstExam = sessionGroup.First();
                     var oturum = firstExam.Oturum;
-
+                    
                     var sessionNodeText = $"📁 Oturum #{oturum.OturumID} - " +
                                          $"{oturum.DeneyTuru ?? "Genel"}" +
                                          $"{(string.IsNullOrEmpty(oturum.ZamanEtiketi) ? "" : " - " + oturum.ZamanEtiketi)}" +
                                          $" ({oturum.KayitBaslangic?.ToString("dd.MM.yyyy HH:mm") ?? "Tarih yok"})";
-
+                    
                     var sessionNode = new TreeNode(sessionNodeText);
                     sessionNode.Tag = oturum;
                     sessionNode.NodeFont = new Font("Segoe UI", 10, FontStyle.Bold);
@@ -290,17 +283,17 @@ namespace eegProject.Forms
                     {
                         var basariYuzdesi = exam.BasariYuzdesi ?? 0;
                         var icon = basariYuzdesi >= 70 ? "✅" : basariYuzdesi >= 50 ? "⚠️" : "❌";
-
+                        
                         var examNodeText = $"📊 {exam.SinavTuru} {icon} - " +
                                           $"%{basariYuzdesi:F0} " +
                                           $"({exam.DogruSayisi}/{exam.ToplamSoru}) - " +
                                           $"{exam.BaslamaTarihi:HH:mm}";
-
+                        
                         var examNode = new TreeNode(examNodeText);
                         examNode.Tag = exam;
-                        examNode.ForeColor = basariYuzdesi >= 70 ? Color.Green :
+                        examNode.ForeColor = basariYuzdesi >= 70 ? Color.Green : 
                                             basariYuzdesi >= 50 ? Color.Orange : Color.Red;
-
+                        
                         sessionNode.Nodes.Add(examNode);
                     }
 
@@ -341,13 +334,13 @@ namespace eegProject.Forms
         {
             lblSinavAdi.Text = $"Sınav: {exam.SinavTuru}";
             lblTarih.Text = $"Tarih: {exam.BaslamaTarihi:dd.MM.yyyy HH:mm}";
-
+            
             var basariYuzdesi = exam.BasariYuzdesi ?? 0;
             var basariIcon = basariYuzdesi >= 70 ? "✅" : basariYuzdesi >= 50 ? "⚠️" : "❌";
             lblBasari.Text = $"Başarı: {basariIcon} %{basariYuzdesi:F1}";
-            lblBasari.ForeColor = basariYuzdesi >= 70 ? Color.Green :
+            lblBasari.ForeColor = basariYuzdesi >= 70 ? Color.Green : 
                                  basariYuzdesi >= 50 ? Color.Orange : Color.Red;
-
+            
             var sure = exam.Sure ?? "-";
             var bitisTarihi = exam.BitisTarihi;
             if (bitisTarihi.HasValue)
@@ -356,7 +349,7 @@ namespace eegProject.Forms
                 sure = $"{duration:F1} dakika";
             }
             lblSure.Text = $"Süre: {sure}";
-
+            
             lblToplamSoru.Text = $"Toplam Soru: {exam.ToplamSoru}";
             lblDogru.Text = $"✔️ Doğru: {exam.DogruSayisi}";
             lblYanlis.Text = $"✖️ Yanlış: {exam.YanlisSayisi}";
@@ -394,7 +387,7 @@ namespace eegProject.Forms
 
                 // Tüm soru cevaplarını çek
                 var cevaplar = await _sinavCevapService.GetByExamResultAsync(_selectedExam.SinavSonucuID);
-
+                
                 // Detaylı rapor göster
                 ShowDetailedReport(_selectedExam, cevaplar);
             }
@@ -442,17 +435,17 @@ namespace eegProject.Forms
             sb.AppendLine($"Boş           : {exam.ToplamSoru - exam.DogruSayisi - exam.YanlisSayisi}");
             sb.AppendLine();
             sb.AppendLine($"Başarı Oranı  : %{exam.BasariYuzdesi ?? 0:F1}");
-
+            
             if (exam.ToplamPuan.HasValue)
             {
                 sb.AppendLine($"Alınan Puan   : {exam.AlinanPuan ?? 0:F1} / {exam.ToplamPuan:F1}");
             }
-
+            
             if (exam.OrtalamaCevapSuresi.HasValue)
             {
                 sb.AppendLine($"Ort. Süre     : {exam.OrtalamaCevapSuresi:F0} saniye/soru");
             }
-
+            
             sb.AppendLine("─────────────────────────────────────────────────────────────────");
             sb.AppendLine();
             sb.AppendLine("SORU BAZLI DETAYLAR:");
@@ -507,7 +500,7 @@ namespace eegProject.Forms
                 this.Cursor = Cursors.WaitCursor;
 
                 var cevaplar = await _sinavCevapService.GetByExamResultAsync(_selectedExam.SinavSonucuID);
-
+                
                 ShowQuestionAnalysis(_selectedExam, cevaplar);
             }
             catch (Exception ex)
@@ -546,7 +539,7 @@ namespace eegProject.Forms
 
             // Soru tipi bazlı analiz
             var groupedByType = cevaplar.GroupBy(c => c.SoruTipi);
-
+            
             foreach (var group in groupedByType)
             {
                 var total = group.Count();
@@ -558,14 +551,14 @@ namespace eegProject.Forms
                 sb.AppendLine($"📊 {group.Key}:");
                 sb.AppendLine($"   Toplam: {total} | ✔️ Doğru: {correct} | ✗ Yanlış: {wrong} | ⭕ Boş: {empty}");
                 sb.AppendLine($"   Başarı: %{successRate:F1}");
-
+                
                 if (group.Any(c => c.CevaplamaSuresi.HasValue))
                 {
                     var avgTime = group.Where(c => c.CevaplamaSuresi.HasValue)
                                       .Average(c => c.CevaplamaSuresi.Value);
                     sb.AppendLine($"   Ortalama Süre: {avgTime:F0}sn");
                 }
-
+                
                 sb.AppendLine();
             }
 
@@ -577,28 +570,28 @@ namespace eegProject.Forms
             {
                 var icon = cevap.DogruMu ? "✓" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? " " : "✗";
                 sb.AppendLine($"[{icon}] Soru {cevap.SoruNo} - {cevap.SoruTipi}");
-
+                
                 if (!string.IsNullOrWhiteSpace(cevap.SoruMetni))
                 {
                     var maxLen = Math.Min(70, cevap.SoruMetni.Length);
                     sb.AppendLine($"    {cevap.SoruMetni.Substring(0, maxLen)}...");
                 }
-
+                
                 if (!string.IsNullOrWhiteSpace(cevap.VerilenCevap))
                 {
                     sb.AppendLine($"    Verilen: {cevap.VerilenCevap} | Doğru: {cevap.DogruCevap}");
                 }
-
+                
                 if (cevap.CevaplamaSuresi.HasValue)
                 {
                     sb.AppendLine($"    ⏱️ Süre: {cevap.CevaplamaSuresi}sn");
                 }
-
+                
                 if (cevap.SoruTipi == "Klasik" && cevap.EslesmeYuzdesi.HasValue)
                 {
                     sb.AppendLine($"    📊 Eşleşme: %{cevap.EslesmeYuzdesi:F0} - Puan: {cevap.AlinanPuan:F1}/{cevap.ToplamPuan}");
                 }
-
+                
                 sb.AppendLine();
             }
 
@@ -616,11 +609,6 @@ namespace eegProject.Forms
             form.Controls.Add(txt);
             form.Controls.Add(btnClose);
             form.ShowDialog(this);
-        }
-
-        private void SinavSonucRaporForm_Load(object sender, EventArgs e)
-        {
-
         }
     }
 }

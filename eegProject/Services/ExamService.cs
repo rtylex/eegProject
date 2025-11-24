@@ -124,7 +124,7 @@ namespace eegProject.Services
                 var toplamPuan = sinavSonuclari.Sum(s => s.ToplamPuan ?? 0);
                 var alinanPuan = sinavSonuclari.Sum(s => s.AlinanPuan ?? 0);
                 var ortCevapSuresi = sinavSonuclari.Average(s => s.OrtalamaCevapSuresi ?? 0);
-
+                
                 // Süre limitlerini parse et (ilk sınavdan)
                 object timeLimits = null;
                 var firstExam = sinavSonuclari.FirstOrDefault();
@@ -140,7 +140,7 @@ namespace eegProject.Services
                     }
                     catch { /* JsonDetay parse hatası - görmezden gel */ }
                 }
-
+                
                 // Gerçek süreyi hesapla (Sure string'inden)
                 double? actualDurationMinutes = null;
                 if (firstExam != null && !string.IsNullOrWhiteSpace(firstExam.Sure))
@@ -166,25 +166,25 @@ namespace eegProject.Services
                     ["true_false_count"] = sinavSonuclari.Sum(s => s.DogruYanlisSayisi ?? 0),
                     ["classic_question_count"] = sinavSonuclari.Sum(s => s.KlasikSoruSayisi ?? 0)
                 };
-
+                
                 // Süre bilgilerini ekle (varsa)
                 if (timeLimits != null)
                 {
                     result["time_limits"] = timeLimits;
                 }
-
+                
                 if (actualDurationMinutes.HasValue)
                 {
                     result["actual_duration_minutes"] = actualDurationMinutes.Value;
                 }
-
+                
                 // ✅ YENİ: SORU BAZLI DETAYLARI EKLE
                 var questionDetails = await GetQuestionDetailsForAnalysisAsync(context, sinavSonuclari, timeLimits);
                 if (questionDetails != null && questionDetails.Count > 0)
                 {
                     result["question_details"] = questionDetails;
                 }
-
+                
                 return result;
             }
         }
@@ -193,12 +193,12 @@ namespace eegProject.Services
         /// Sınav sonuçlarına ait soru detaylarını AI analiz formatında hazırlar (HELPER)
         /// </summary>
         private async Task<List<Dictionary<string, object>>> GetQuestionDetailsForAnalysisAsync(
-            eegDBEntities context,
+            eegDBEntities context, 
             List<SinavSonucu> sinavSonuclari,
             object timeLimits)
         {
             var allQuestionDetails = new List<Dictionary<string, object>>();
-
+            
             // Süre limitlerini parse et
             Dictionary<string, int?> limits = null;
             if (timeLimits != null)
@@ -207,17 +207,17 @@ namespace eegProject.Services
                 {
                     var limitsJson = JsonConvert.SerializeObject(timeLimits);
                     var limitsDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(limitsJson);
-
+                    
                     limits = new Dictionary<string, int?>
                     {
-                        ["multiple_choice"] = limitsDict.ContainsKey("multiple_choice_seconds_per_question")
-                            ? Convert.ToInt32(limitsDict["multiple_choice_seconds_per_question"])
+                        ["multiple_choice"] = limitsDict.ContainsKey("multiple_choice_seconds_per_question") 
+                            ? Convert.ToInt32(limitsDict["multiple_choice_seconds_per_question"]) 
                             : (int?)null,
-                        ["true_false"] = limitsDict.ContainsKey("true_false_seconds_per_question")
-                            ? Convert.ToInt32(limitsDict["true_false_seconds_per_question"])
+                        ["true_false"] = limitsDict.ContainsKey("true_false_seconds_per_question") 
+                            ? Convert.ToInt32(limitsDict["true_false_seconds_per_question"]) 
                             : (int?)null,
-                        ["classic"] = limitsDict.ContainsKey("classic_seconds_per_question")
-                            ? Convert.ToInt32(limitsDict["classic_seconds_per_question"])
+                        ["classic"] = limitsDict.ContainsKey("classic_seconds_per_question") 
+                            ? Convert.ToInt32(limitsDict["classic_seconds_per_question"]) 
                             : (int?)null
                     };
                 }
@@ -248,7 +248,7 @@ namespace eegProject.Services
                     if (cevap.CevaplamaSuresi.HasValue)
                     {
                         questionDetail["answer_time_seconds"] = cevap.CevaplamaSuresi.Value;
-
+                        
                         // Süre limiti ve aşım kontrolü
                         if (limits != null)
                         {
@@ -259,7 +259,7 @@ namespace eegProject.Services
                                 timeLimit = limits["true_false"];
                             else if (cevap.SoruTipi == "Klasik" && limits.ContainsKey("classic"))
                                 timeLimit = limits["classic"];
-
+                            
                             if (timeLimit.HasValue)
                             {
                                 questionDetail["time_limit_seconds"] = timeLimit.Value;
@@ -275,7 +275,7 @@ namespace eegProject.Services
                         {
                             questionDetail["matching_percentage"] = Math.Round(cevap.EslesmeYuzdesi.Value, 1);
                         }
-
+                        
                         // Anahtar kelimeleri parse et
                         if (!string.IsNullOrWhiteSpace(cevap.AnahtarKelimelerJson))
                         {
@@ -286,7 +286,7 @@ namespace eegProject.Services
                             }
                             catch { /* Parse hatası */ }
                         }
-
+                        
                         if (!string.IsNullOrWhiteSpace(cevap.EslesenAnahtarKelimeler))
                         {
                             try
@@ -351,7 +351,7 @@ namespace eegProject.Services
                         }
                         catch { /* JsonDetay parse hatası - görmezden gel */ }
                     }
-
+                    
                     // Gerçek süreyi hesapla
                     double? actualDurationMinutes = null;
                     if (firstExam != null && !string.IsNullOrWhiteSpace(firstExam.Sure))
@@ -360,7 +360,7 @@ namespace eegProject.Services
                         if (double.TryParse(sureStr, out var mins))
                             actualDurationMinutes = mins;
                     }
-
+                    
                     var sessionInfo = sinavSonuclari.First().Oturum;
                     var sessionData = new Dictionary<string, object>
                     {
@@ -381,18 +381,18 @@ namespace eegProject.Services
                         ["true_false_count"] = sinavSonuclari.Sum(s => s.DogruYanlisSayisi ?? 0),
                         ["classic_question_count"] = sinavSonuclari.Sum(s => s.KlasikSoruSayisi ?? 0)
                     };
-
+                    
                     // Süre bilgilerini ekle (varsa)
                     if (timeLimits != null)
                     {
                         sessionData["time_limits"] = timeLimits;
                     }
-
+                    
                     if (actualDurationMinutes.HasValue)
                     {
                         sessionData["actual_duration_minutes"] = actualDurationMinutes.Value;
                     }
-
+                    
                     // ✅ YENİ: SORU BAZLI DETAYLARI EKLE
                     var questionDetails = await GetQuestionDetailsForAnalysisAsync(context, sinavSonuclari, timeLimits);
                     if (questionDetails != null && questionDetails.Count > 0)
