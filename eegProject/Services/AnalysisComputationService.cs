@@ -15,6 +15,7 @@ namespace eegProject.Services
     {
         private readonly EegDataService _eegDataService = new EegDataService();
         private readonly SessionService _sessionService = new SessionService();
+        private readonly ExamService _examService = new ExamService();
         private readonly AiAnalysisService _aiAnalysisService;
         
         private const int MinimumSamplesForRelaxation = 20;
@@ -540,7 +541,8 @@ namespace eegProject.Services
             List<int> sessionIds,
             string analysisType,
             int baselineSessionId,
-            bool useAI = false)
+            bool useAI = false,
+            bool includeExamResults = true)
         {
             if (sessionIds == null || sessionIds.Count < 2)
             {
@@ -710,10 +712,23 @@ namespace eegProject.Services
             {
                 try
                 {
-                    summary = await _aiAnalysisService.GenerateComparativeSummaryAsync(
+                    // Sınav verilerini topla (eğer dahil edilecekse)
+                    string examDataJson = null;
+                    if (includeExamResults)
+                    {
+                        var examData = await _examService.GetExamDataForAnalysisAsync(sessionIds);
+                        if (examData != null && examData.Count > 0)
+                        {
+                            examDataJson = JsonConvert.SerializeObject(examData, Formatting.Indented);
+                        }
+                    }
+
+                    // AI'a gönder (exam verisi varsa dahil et)
+                    summary = await _aiAnalysisService.GenerateComparativeSummaryWithExamAsync(
                         userName,
                         experimentType ?? "Genel",
-                        metricsJson);
+                        metricsJson,
+                        examDataJson);
                 }
                 catch (Exception ex)
                 {
@@ -726,11 +741,17 @@ namespace eegProject.Services
                 summary = GenerateBatchSummaryWithoutAI(analysisType, sessionResults, summaryLines, baselineValue, baselineSession.ZamanEtiketi);
             }
 
+            var methodology = useAI ? $"Batch_{analysisType}_Baseline_AI" : $"Batch_{analysisType}_Baseline";
+            if (includeExamResults)
+            {
+                methodology += "_WithExam";
+            }
+
             return new AnalizSonucu
             {
                 OturumID = null,
                 AnalizTipi = $"TopluKarsilastirma_{analysisType}",
-                Metodoloji = useAI ? $"Batch_{analysisType}_Baseline_AI" : $"Batch_{analysisType}_Baseline",
+                Metodoloji = methodology,
                 MetricsJSON = metricsJson,
                 Summary = summary,
                 AnalizTarihi = DateTime.UtcNow

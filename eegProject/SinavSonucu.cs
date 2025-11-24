@@ -38,6 +38,7 @@ namespace eegProject
         public Nullable<double> BasariYuzdesi { get; set; }
         public Nullable<int> CokSeçmeliSayisi { get; set; }
         public Nullable<int> KlasikSoruSayisi { get; set; }
+        public Nullable<int> DogruYanlisSayisi { get; set; }
     
         public virtual Oturum Oturum { get; set; }
         public virtual SinavAtama SinavAtama { get; set; }

@@ -101,7 +101,7 @@
             <PropertyRef Name="AtamaID" />
           </Key>
           <Property Name="AtamaID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="KullaniciID" Type="int" Nullable="false" />
+          <Property Name="KullaniciID" Type="int" />
           <Property Name="SinavAdi" Type="nvarchar" MaxLength="200" Nullable="false" />
           <Property Name="SinavAciklama" Type="nvarchar" MaxLength="500" />
           <Property Name="SinavJsonPath" Type="nvarchar" MaxLength="500" />
@@ -112,6 +112,7 @@
           <Property Name="TamamlandiMi" Type="bit" Nullable="false" />
           <Property Name="TamamlanmaTarihi" Type="datetime2" Precision="7" />
           <Property Name="Notlar" Type="nvarchar(max)" />
+          <Property Name="OturumID" Type="int" />
         </EntityType>
         <EntityType Name="SinavCevap">
           <Key>
@@ -155,6 +156,7 @@
           <Property Name="BasariYuzdesi" Type="float" />
           <Property Name="CokSeçmeliSayisi" Type="int" />
           <Property Name="KlasikSoruSayisi" Type="int" />
+          <Property Name="DogruYanlisSayisi" Type="int" />
         </EntityType>
         <EntityType Name="Yonetici">
           <Key>
@@ -282,8 +284,20 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_SinavAtama_Kullanici">
+        <Association Name="FK_SinavAtama_AtayanYonetici">
           <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+          <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Kullanici">
+              <PropertyRef Name="KullaniciID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="AtayanYoneticiID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavAtama_Kullanici">
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="0..1" />
           <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Kullanici">
@@ -294,15 +308,15 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_SinavAtama_Yonetici">
-          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="1" />
+        <Association Name="FK_SinavAtama_Oturum">
+          <End Role="Oturum" Type="Self.Oturum" Multiplicity="0..1" />
           <End Role="SinavAtama" Type="Self.SinavAtama" Multiplicity="*" />
           <ReferentialConstraint>
-            <Principal Role="Kullanici">
-              <PropertyRef Name="KullaniciID" />
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
             </Principal>
             <Dependent Role="SinavAtama">
-              <PropertyRef Name="AtayanYoneticiID" />
+              <PropertyRef Name="OturumID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -377,12 +391,16 @@
             <End Role="ZamanEtiketi" EntitySet="ZamanEtiketi" />
             <End Role="Oturum" EntitySet="Oturum" />
           </AssociationSet>
+          <AssociationSet Name="FK_SinavAtama_AtayanYonetici" Association="Self.FK_SinavAtama_AtayanYonetici">
+            <End Role="Kullanici" EntitySet="Kullanici" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
           <AssociationSet Name="FK_SinavAtama_Kullanici" Association="Self.FK_SinavAtama_Kullanici">
             <End Role="Kullanici" EntitySet="Kullanici" />
             <End Role="SinavAtama" EntitySet="SinavAtama" />
           </AssociationSet>
-          <AssociationSet Name="FK_SinavAtama_Yonetici" Association="Self.FK_SinavAtama_Yonetici">
-            <End Role="Kullanici" EntitySet="Kullanici" />
+          <AssociationSet Name="FK_SinavAtama_Oturum" Association="Self.FK_SinavAtama_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
             <End Role="SinavAtama" EntitySet="SinavAtama" />
           </AssociationSet>
           <AssociationSet Name="FK_SinavCevap_SinavSonucu" Association="Self.FK_SinavCevap_SinavSonucu">
@@ -469,6 +487,7 @@
           <Property Name="ZamanEtiketiID" Type="Int32" />
           <NavigationProperty Name="DeneyTuru1" Relationship="eegDBModel.FK_Oturum_DeneyTuru" FromRole="Oturum" ToRole="DeneyTuru" />
           <NavigationProperty Name="ZamanEtiketi1" Relationship="eegDBModel.FK_Oturum_ZamanEtiketi" FromRole="Oturum" ToRole="ZamanEtiketi" />
+          <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavAtama_Oturum" FromRole="Oturum" ToRole="SinavAtama" />
         </EntityType>
         <EntityType Name="Yonetici">
           <Key>
@@ -597,6 +616,10 @@
             <End Role="SinavSonucu" EntitySet="SinavSonucu" />
             <End Role="SinavCevap" EntitySet="SinavCevap" />
           </AssociationSet>
+          <AssociationSet Name="FK_SinavAtama_Oturum" Association="eegDBModel.FK_SinavAtama_Oturum">
+            <End Role="Oturum" EntitySet="Oturum" />
+            <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="AuditLog">
           <Key>
@@ -635,6 +658,7 @@
           <Property Name="KlasikSoruSayisi" Type="Int32" />
           <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavSonucu_SinavAtama" FromRole="SinavSonucu" ToRole="SinavAtama" />
           <NavigationProperty Name="SinavCevap" Relationship="eegDBModel.FK_SinavCevap_SinavSonucu" FromRole="SinavSonucu" ToRole="SinavCevap" />
+          <Property Name="DogruYanlisSayisi" Type="Int32" />
         </EntityType>
         <Association Name="FK__SinavSonu__Oturu__60A75C0F">
           <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="1">
@@ -725,7 +749,7 @@
             <PropertyRef Name="AtamaID" />
           </Key>
           <Property Name="AtamaID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="KullaniciID" Type="Int32" Nullable="false" />
+          <Property Name="KullaniciID" Type="Int32" />
           <Property Name="SinavAdi" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="SinavAciklama" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
           <Property Name="SinavJsonPath" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
@@ -739,6 +763,8 @@
           <NavigationProperty Name="Kullanici" Relationship="eegDBModel.FK_SinavAtama_Kullanici" FromRole="SinavAtama" ToRole="Kullanici" />
           <NavigationProperty Name="Kullanici1" Relationship="eegDBModel.FK_SinavAtama_Yonetici" FromRole="SinavAtama" ToRole="Kullanici" />
           <NavigationProperty Name="SinavSonucu" Relationship="eegDBModel.FK_SinavSonucu_SinavAtama" FromRole="SinavAtama" ToRole="SinavSonucu" />
+          <Property Name="OturumID" Type="Int32" />
+          <NavigationProperty Name="Oturum" Relationship="eegDBModel.FK_SinavAtama_Oturum" FromRole="SinavAtama" ToRole="Oturum" />
         </EntityType>
         <EntityType Name="SinavCevap">
           <Key>
@@ -762,7 +788,7 @@
           <NavigationProperty Name="SinavSonucu" Relationship="eegDBModel.FK_SinavCevap_SinavSonucu" FromRole="SinavCevap" ToRole="SinavSonucu" />
         </EntityType>
         <Association Name="FK_SinavAtama_Kullanici">
-          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="1" />
+          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="0..1" />
           <End Type="eegDBModel.SinavAtama" Role="SinavAtama" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Kullanici">
@@ -808,6 +834,18 @@
             </Principal>
             <Dependent Role="SinavCevap">
               <PropertyRef Name="SinavSonucuID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_SinavAtama_Oturum">
+          <End Type="eegDBModel.Oturum" Role="Oturum" Multiplicity="0..1" />
+          <End Type="eegDBModel.SinavAtama" Role="SinavAtama" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Oturum">
+              <PropertyRef Name="OturumID" />
+            </Principal>
+            <Dependent Role="SinavAtama">
+              <PropertyRef Name="OturumID" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -908,6 +946,7 @@
           <EntitySetMapping Name="SinavSonucu">
             <EntityTypeMapping TypeName="eegDBModel.SinavSonucu">
               <MappingFragment StoreEntitySet="SinavSonucu">
+                <ScalarProperty Name="DogruYanlisSayisi" ColumnName="DogruYanlisSayisi" />
                 <ScalarProperty Name="KlasikSoruSayisi" ColumnName="KlasikSoruSayisi" />
                 <ScalarProperty Name="CokSeçmeliSayisi" ColumnName="CokSeçmeliSayisi" />
                 <ScalarProperty Name="BasariYuzdesi" ColumnName="BasariYuzdesi" />
@@ -966,6 +1005,7 @@
           <EntitySetMapping Name="SinavAtama">
             <EntityTypeMapping TypeName="eegDBModel.SinavAtama">
               <MappingFragment StoreEntitySet="SinavAtama">
+                <ScalarProperty Name="OturumID" ColumnName="OturumID" />
                 <ScalarProperty Name="Notlar" ColumnName="Notlar" />
                 <ScalarProperty Name="TamamlanmaTarihi" ColumnName="TamamlanmaTarihi" />
                 <ScalarProperty Name="TamamlandiMi" ColumnName="TamamlandiMi" />

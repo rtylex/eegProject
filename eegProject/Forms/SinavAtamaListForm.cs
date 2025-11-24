@@ -105,30 +105,30 @@ namespace eegProject.Forms
                 },
                 new DataGridViewTextBoxColumn
                 {
+                    Name = "OturumBilgi",
+                    HeaderText = "Oturum",
+                    DataPropertyName = "OturumBilgi",
+                    Width = 200
+                },
+                new DataGridViewTextBoxColumn
+                {
                     Name = "SinavAdi",
                     HeaderText = "Sınav Adı",
                     DataPropertyName = "SinavAdi",
-                    Width = 200
+                    Width = 180
                 },
                 new DataGridViewTextBoxColumn
                 {
                     Name = "SinavAciklama",
                     HeaderText = "Açıklama",
                     DataPropertyName = "SinavAciklama",
-                    Width = 250
+                    Width = 200
                 },
                 new DataGridViewTextBoxColumn
                 {
                     Name = "AtamaTarihi",
                     HeaderText = "Atama Tarihi",
                     DataPropertyName = "AtamaTarihiStr",
-                    Width = 120
-                },
-                new DataGridViewTextBoxColumn
-                {
-                    Name = "SonGecerlilikTarihi",
-                    HeaderText = "Son Geçerlilik",
-                    DataPropertyName = "SonGecerlilikStr",
                     Width = 120
                 },
                 new DataGridViewCheckBoxColumn
@@ -161,14 +161,19 @@ namespace eegProject.Forms
 
                 var atamalar = await _atamaService.GetByManagerAsync(_yoneticiId);
 
-                var dataSource = atamalar.Select(a => new
+                // Sadece oturum bazlı atamaları filtrele
+                var oturumAtamalari = atamalar.Where(a => a.OturumID.HasValue).ToList();
+
+                var dataSource = oturumAtamalari.Select(a => new
                 {
                     a.AtamaID,
                     KullaniciAdi = a.Kullanici?.AdSoyad ?? "Bilinmiyor",
+                    OturumBilgi = a.Oturum != null 
+                        ? $"#{a.Oturum.OturumID} - {a.Oturum.DeneyTuru ?? "Genel"} {(string.IsNullOrEmpty(a.Oturum.ZamanEtiketi) ? "" : " - " + a.Oturum.ZamanEtiketi)}"
+                        : "Oturum yok",
                     a.SinavAdi,
                     a.SinavAciklama,
                     AtamaTarihiStr = a.AtamaTarihi.ToString("dd.MM.yyyy HH:mm"),
-                    SonGecerlilikStr = a.SonGecerlilikTarihi?.ToString("dd.MM.yyyy") ?? "-",
                     a.TamamlandiMi,
                     TamamlanmaTarihiStr = a.TamamlanmaTarihi?.ToString("dd.MM.yyyy HH:mm") ?? "-"
                 }).ToList();
@@ -196,7 +201,7 @@ namespace eegProject.Forms
 
         private void BtnYeniAtama_Click(object sender, EventArgs e)
         {
-            using (var form = new SinavAtamaForm(_yoneticiId))
+            using (var form = new SinavAtamaOturumForm(_yoneticiId))
             {
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {

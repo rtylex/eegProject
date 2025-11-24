@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="4e37460d65674370b699e4dd1f6881f9" Name="Diagram1" ZoomLevel="25">
+      <Diagram DiagramId="4e37460d65674370b699e4dd1f6881f9" Name="Diagram1" ZoomLevel="94">
         <EntityTypeShape EntityType="eegDBModel.AnalizSonucu" Width="1.5" PointX="5.25" PointY="8.375" IsExpanded="true" />
         <EntityTypeShape EntityType="eegDBModel.EEGVerisi" Width="1.5" PointX="5.25" PointY="3.5" IsExpanded="true" />
         <EntityTypeShape EntityType="eegDBModel.Kullanici" Width="1.5" PointX="0.75" PointY="3.75" IsExpanded="true" />
@@ -15,7 +15,7 @@
         <AssociationConnector Association="eegDBModel.FK_EEG_Oturum" ManuallyRouted="false" />
         <AssociationConnector Association="eegDBModel.FK_Oturum_Kullanici" ManuallyRouted="false" />
         <EntityTypeShape EntityType="eegDBModel.AuditLog" Width="1.5" PointX="7.375" PointY="4.625" />
-        <EntityTypeShape EntityType="eegDBModel.SinavSonucu" Width="1.5" PointX="5.25" PointY="12.25" />
+        <EntityTypeShape EntityType="eegDBModel.SinavSonucu" Width="1.5" PointX="5.875" PointY="12" />
         <AssociationConnector Association="eegDBModel.FK__SinavSonu__Oturu__60A75C0F" />
         <EntityTypeShape EntityType="eegDBModel.KullaniciModulYetkisi" Width="1.5" PointX="3" PointY="5.125" />
         <AssociationConnector Association="eegDBModel.FK__Kullanici__Kulla__66603565" />
@@ -29,6 +29,7 @@
         <AssociationConnector Association="eegDBModel.FK_SinavAtama_Yonetici" />
         <AssociationConnector Association="eegDBModel.FK_SinavSonucu_SinavAtama" />
         <AssociationConnector Association="eegDBModel.FK_SinavCevap_SinavSonucu" />
+        <AssociationConnector Association="eegDBModel.FK_SinavAtama_Oturum" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

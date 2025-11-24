@@ -21,7 +21,7 @@ namespace eegProject
         }
     
         public int AtamaID { get; set; }
-        public int KullaniciID { get; set; }
+        public Nullable<int> KullaniciID { get; set; }
         public string SinavAdi { get; set; }
         public string SinavAciklama { get; set; }
         public string SinavJsonPath { get; set; }
@@ -32,10 +32,12 @@ namespace eegProject
         public bool TamamlandiMi { get; set; }
         public Nullable<System.DateTime> TamamlanmaTarihi { get; set; }
         public string Notlar { get; set; }
+        public Nullable<int> OturumID { get; set; }
     
         public virtual Kullanici Kullanici { get; set; }
         public virtual Kullanici Kullanici1 { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SinavSonucu> SinavSonucu { get; set; }
+        public virtual Oturum Oturum { get; set; }
     }
 }

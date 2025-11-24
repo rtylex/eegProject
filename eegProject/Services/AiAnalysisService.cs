@@ -87,7 +87,7 @@ namespace eegProject.Services
             }
 
             var prompt = BuildComparativePrompt(userName, experimentType, analysesJson, examDataJson);
-            return await CallOpenAiAsync(prompt, maxTokens: 1000);
+            return await CallOpenAiAsync(prompt, maxTokens: 1200);
         }
 
         /// <summary>
@@ -208,6 +208,10 @@ Onemli: Sinav verilerini EEG metrikleriyle birlikte degerlendir:
 - Sinav basarisi ile dikkat/konsantrasyon arasindaki iliskiyi yorumla
 - Hangi oturumda hem EEG hem sinav performansi daha iyi?
 - Sinav basarisindaki degisim ile EEG metriklerindeki degisim paralel mi?
+- Sure yonetimi analizi: time_exceeded fieldina bak, hangi oturumda sure asimi fazla?
+- Soru tipi bazinda performans: question_type fieldina gore hangi soru tipinde zayif/guclu?
+- Klasik sorularda matching_percentage ve matched_keywords kullanarak anahtar kelime analizini yap
+- Ortalama cevap suresi (average_answer_time_seconds) ile EEG metrikleri arasindaki iliskiyi yorumla
 " : "";
 
             return $@"EEG Deney Analizi - BAZAL REFERANSLI Karsilastirmali Rapor
@@ -244,7 +248,11 @@ BAZALA GORE BULGULAR:
 SINAV-EEG KORELASYONU:
 - [Sinav basarisi en yuksek oturumdaki EEG durumu]
 - [EEG ve sinav performansi arasindaki iliski]
-- [Hangi kosulda hem EEG hem sinav daha iyi?]" : "")}
+- [Hangi kosulda hem EEG hem sinav daha iyi?]
+- [Sure yonetimi: Hangi oturumda time_exceeded en az? EEG ile iliskisi nedir?]
+- [Soru tipi performansi: Hangi soru tipinde basarili/basarisiz? Neden?]
+- [Klasik sorularda anahtar kelime yakalama yetenegindeki degisim]
+- [Ortalama cevap suresi trendi: Hizlaniyor mu, yavasliyor mu? EEG'ye etkisi]" : "")}
 
 DEGERLENDIRME:
 [Bazala gore genel yorumlama - deney basarili mi? Hangi kosulda daha iyi?{(hasExamData ? " Sinav sonuclari degerlendirmeyi nasil etkiliyor?" : "")}]
@@ -252,7 +260,7 @@ DEGERLENDIRME:
 ONERI: (opsiyonel)
 [Pratik oneri]
 
-Maksimum {(hasExamData ? "600" : "500")} kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma!
+Maksimum {(hasExamData ? "800" : "500")} kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma!
 ";
         }
 

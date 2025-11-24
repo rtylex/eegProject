@@ -6,6 +6,10 @@ namespace eegProject.Models
     {
         public string SinavTuru { get; set; }
         public string Aciklama { get; set; }
+        public int? ToplamSinavSuresiDakika { get; set; }
+        public int? HerCokSeçmeliSoruSuresiSaniye { get; set; }
+        public int? HerDogruYanlisSoruSuresiSaniye { get; set; }
+        public int? HerKlasikSoruSuresiSaniye { get; set; }
         public List<ExamQuestion> Sorular { get; set; }
     }
 

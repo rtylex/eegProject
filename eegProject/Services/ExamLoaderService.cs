@@ -34,6 +34,10 @@ namespace eegProject.Services
             {
                 SinavTuru = "Karma Sınav",
                 Aciklama = "Çoktan seçmeli, doğru-yanlış ve klasik sorular içeren örnek sınav",
+                ToplamSinavSuresiDakika = 5,
+                HerCokSeçmeliSoruSuresiSaniye = 30,
+                HerDogruYanlisSoruSuresiSaniye = 20,
+                HerKlasikSoruSuresiSaniye = 120,
                 Sorular = new System.Collections.Generic.List<ExamQuestion>
                 {
                     new ExamQuestion
@@ -43,8 +47,7 @@ namespace eegProject.Services
                         SoruMetni = "2 + 2 kaç eder?",
                         Siklar = new System.Collections.Generic.List<string> { "2", "3", "4", "5" },
                         DogruCevap = "C",
-                        ToplamPuan = 5,
-                        MaxSure = 30
+                        ToplamPuan = 5
                     },
                     new ExamQuestion
                     {
@@ -52,8 +55,7 @@ namespace eegProject.Services
                         SoruTipi = "DogruYanlis",
                         SoruMetni = "Dünya güneşin etrafında döner.",
                         DogruCevap = "Dogru",
-                        ToplamPuan = 3,
-                        MaxSure = 20
+                        ToplamPuan = 3
                     },
                     new ExamQuestion
                     {
@@ -61,8 +63,7 @@ namespace eegProject.Services
                         SoruTipi = "DogruYanlis",
                         SoruMetni = "Su 100 derecede kaynar.",
                         DogruCevap = "Dogru",
-                        ToplamPuan = 3,
-                        MaxSure = 20
+                        ToplamPuan = 3
                     },
                     new ExamQuestion
                     {
@@ -74,8 +75,7 @@ namespace eegProject.Services
                             "ışık", "güneş", "klorofil", "oksijen", 
                             "glikoz", "bitki", "karbon dioksit" 
                         },
-                        ToplamPuan = 10,
-                        MaxSure = 120
+                        ToplamPuan = 10
                     },
                     new ExamQuestion
                     {
@@ -84,8 +84,7 @@ namespace eegProject.Services
                         SoruMetni = "Türkiye'nin başkenti neresidir?",
                         Siklar = new System.Collections.Generic.List<string> { "İstanbul", "Ankara", "İzmir", "Bursa" },
                         DogruCevap = "B",
-                        ToplamPuan = 5,
-                        MaxSure = 30
+                        ToplamPuan = 5
                     }
                 }
             };

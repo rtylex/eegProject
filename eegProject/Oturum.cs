@@ -20,6 +20,7 @@ namespace eegProject
             this.AnalizSonucu = new HashSet<AnalizSonucu>();
             this.EEGVerisi = new HashSet<EEGVerisi>();
             this.SinavSonucu = new HashSet<SinavSonucu>();
+            this.SinavAtama = new HashSet<SinavAtama>();
         }
     
         public int OturumID { get; set; }
@@ -41,5 +42,7 @@ namespace eegProject
         public virtual ICollection<SinavSonucu> SinavSonucu { get; set; }
         public virtual DeneyTuru DeneyTuru1 { get; set; }
         public virtual ZamanEtiketi ZamanEtiketi1 { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<SinavAtama> SinavAtama { get; set; }
     }
 }

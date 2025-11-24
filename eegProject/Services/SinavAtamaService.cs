@@ -12,7 +12,7 @@ namespace eegProject.Services
     internal sealed class SinavAtamaService
     {
         /// <summary>
-        /// Kullanıcıya sınav atar
+        /// Kullanıcıya sınav atar (Genel atama - eski sistem)
         /// </summary>
         public async Task<SinavAtama> CreateAsync(
             int kullaniciId,
@@ -29,6 +29,7 @@ namespace eegProject.Services
                 var atama = new SinavAtama
                 {
                     KullaniciID = kullaniciId,
+                    OturumID = null, // Genel atama
                     SinavAdi = sinavAdi,
                     SinavAciklama = sinavAciklama,
                     SinavJsonPath = sinavJsonPath,
@@ -36,6 +37,48 @@ namespace eegProject.Services
                     AtayanYoneticiID = atayanYoneticiId,
                     AtamaTarihi = DateTime.UtcNow,
                     SonGecerlilikTarihi = sonGecerlilikTarihi,
+                    TamamlandiMi = false,
+                    Notlar = notlar
+                };
+
+                context.SinavAtama.Add(atama);
+                await context.SaveChangesAsync();
+                return atama;
+            }
+        }
+
+        /// <summary>
+        /// Oturuma sınav atar (YENİ SISTEM - Önerilen)
+        /// </summary>
+        public async Task<SinavAtama> CreateForSessionAsync(
+            int oturumId,
+            string sinavAdi,
+            string sinavAciklama,
+            string sinavJsonPath,
+            string sinavJsonContent,
+            int atayanYoneticiId,
+            string notlar = null)
+        {
+            using (var context = DbContextFactory.Create())
+            {
+                // Önce oturumu bulup kullanıcı ID'sini alalım
+                var oturum = await context.Oturum.FindAsync(oturumId);
+                if (oturum == null)
+                {
+                    throw new InvalidOperationException($"Oturum bulunamadı: {oturumId}");
+                }
+
+                var atama = new SinavAtama
+                {
+                    KullaniciID = oturum.KullaniciID, // Oturumun kullanıcısı
+                    OturumID = oturumId,
+                    SinavAdi = sinavAdi,
+                    SinavAciklama = sinavAciklama,
+                    SinavJsonPath = sinavJsonPath,
+                    SinavJsonContent = sinavJsonContent,
+                    AtayanYoneticiID = atayanYoneticiId,
+                    AtamaTarihi = DateTime.UtcNow,
+                    SonGecerlilikTarihi = null, // Oturum bazlı atamalarda geçerlilik yok
                     TamamlandiMi = false,
                     Notlar = notlar
                 };
@@ -56,6 +99,7 @@ namespace eegProject.Services
                 return await context.SinavAtama
                     .Include(a => a.Kullanici)
                     .Include(a => a.Kullanici1) // AtayanYonetici
+                    .Include(a => a.Oturum)
                     .Where(a => a.KullaniciID == kullaniciId)
                     .OrderByDescending(a => a.AtamaTarihi)
                     .ToListAsync();
@@ -72,23 +116,9 @@ namespace eegProject.Services
                 return await context.SinavAtama
                     .Include(a => a.Kullanici)
                     .Include(a => a.Kullanici1)
+                    .Include(a => a.Oturum)
                     .Where(a => a.KullaniciID == kullaniciId && !a.TamamlandiMi)
                     .Where(a => !a.SonGecerlilikTarihi.HasValue || a.SonGecerlilikTarihi > DateTime.UtcNow)
-                    .OrderByDescending(a => a.AtamaTarihi)
-                    .ToListAsync();
-            }
-        }
-
-        /// <summary>
-        /// Yöneticinin yaptığı atamaları getirir
-        /// </summary>
-        public async Task<List<SinavAtama>> GetByManagerAsync(int yoneticiId)
-        {
-            using (var context = DbContextFactory.Create())
-            {
-                return await context.SinavAtama
-                    .Include(a => a.Kullanici)
-                    .Where(a => a.AtayanYoneticiID == yoneticiId)
                     .OrderByDescending(a => a.AtamaTarihi)
                     .ToListAsync();
             }
@@ -104,7 +134,45 @@ namespace eegProject.Services
                 return await context.SinavAtama
                     .Include(a => a.Kullanici)
                     .Include(a => a.Kullanici1)
+                    .Include(a => a.Oturum)
                     .FirstOrDefaultAsync(a => a.AtamaID == atamaId);
+            }
+        }
+
+        /// <summary>
+        /// Oturuma atanan sınavı getirir (YENİ)
+        /// </summary>
+        public async Task<SinavAtama> GetBySessionAsync(int oturumId)
+        {
+            using (var context = DbContextFactory.Create())
+            {
+                return await context.SinavAtama
+                    .Include(a => a.Oturum)
+                    .Include(a => a.Kullanici1) // Atayan yönetici
+                    .FirstOrDefaultAsync(a => a.OturumID == oturumId);
+            }
+        }
+
+        /// <summary>
+        /// Kullanıcının oturumlarına atanan sınavları getirir (YENİ)
+        /// </summary>
+        public async Task<List<SinavAtama>> GetByUserSessionsAsync(int kullaniciId)
+        {
+            using (var context = DbContextFactory.Create())
+            {
+                // Önce kullanıcının oturum ID'lerini al
+                var oturumIds = await context.Oturum
+                    .Where(o => o.KullaniciID == kullaniciId)
+                    .Select(o => o.OturumID)
+                    .ToListAsync();
+
+                // Sonra bu oturumlara atanan sınavları getir
+                return await context.SinavAtama
+                    .Include(a => a.Oturum)
+                    .Include(a => a.Kullanici1)
+                    .Where(a => a.OturumID != null && oturumIds.Contains(a.OturumID.Value))
+                    .OrderByDescending(a => a.AtamaTarihi)
+                    .ToListAsync();
             }
         }
 
@@ -172,6 +240,24 @@ namespace eegProject.Services
                 return await context.SinavAtama
                     .Include(a => a.Kullanici)
                     .Include(a => a.Kullanici1)
+                    .Include(a => a.Oturum)
+                    .OrderByDescending(a => a.AtamaTarihi)
+                    .ToListAsync();
+            }
+        }
+
+        /// <summary>
+        /// Belirli bir yöneticinin yaptığı atamaları getirir
+        /// </summary>
+        public async Task<List<SinavAtama>> GetByManagerAsync(int yoneticiId)
+        {
+            using (var context = DbContextFactory.Create())
+            {
+                return await context.SinavAtama
+                    .Include(a => a.Kullanici)
+                    .Include(a => a.Kullanici1)
+                    .Include(a => a.Oturum)
+                    .Where(a => a.AtayanYoneticiID == yoneticiId)
                     .OrderByDescending(a => a.AtamaTarihi)
                     .ToListAsync();
             }
