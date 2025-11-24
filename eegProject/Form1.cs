@@ -2538,7 +2538,7 @@ namespace eegProject
                     Left = 20,
                     Top = currentTop,
                     Width = 800,
-                    Height = 195,
+                    Height = 100,
                     BorderStyle = BorderStyle.FixedSingle,
                     BackColor = System.Drawing.Color.LightYellow
                 };
@@ -2555,7 +2555,7 @@ namespace eegProject
 
                 var lblBilgi = new Label
                 {
-                    Text = "⚠️ Yöneticiler sınav göremez, sadece atama ve sonuç görüntüleme yapabilir.",
+                    Text = "⚠️ Yöneticiler sınav göremez, sadece atama yapabilir.",
                     Left = 10,
                     Top = 35,
                     Width = 780,
@@ -2563,14 +2563,13 @@ namespace eegProject
                     ForeColor = System.Drawing.Color.DarkOrange
                 };
 
-                // BUTONLAR - ALT ALTA (TEST)
                 var btnSinavAtaOturum = new Button
                 {
                     Name = "btnSinavAtaOturum",
                     Text = "🎯 Oturuma Sınav Ata",
                     Left = 10,
                     Top = 60,
-                    Width = 300,
+                    Width = 220,
                     Height = 35,
                     BackColor = System.Drawing.Color.LightCoral,
                     Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
@@ -2581,33 +2580,19 @@ namespace eegProject
                 {
                     Name = "btnAtamalariGor",
                     Text = "📋 Tüm Atamaları Görüntüle",
-                    Left = 10,
-                    Top = 105,
-                    Width = 300,
+                    Left = 240,
+                    Top = 60,
+                    Width = 240,
                     Height = 35,
                     BackColor = System.Drawing.Color.LightGreen,
                     Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
                 };
                 btnAtamalariGor.Click += BtnAtamalariGor_Click;
 
-                var btnSinavSonuclari = new Button
-                {
-                    Name = "btnSinavSonuclari",
-                    Text = "📊 Sınav Sonuçları",
-                    Left = 10,
-                    Top = 150,
-                    Width = 300,
-                    Height = 35,
-                    BackColor = System.Drawing.Color.LightBlue,
-                    Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
-                };
-                btnSinavSonuclari.Click += BtnSinavSonuclari_Click;
-
                 pnlYonetici.Controls.Add(lblYonetici);
                 pnlYonetici.Controls.Add(lblBilgi);
                 pnlYonetici.Controls.Add(btnSinavAtaOturum);
                 pnlYonetici.Controls.Add(btnAtamalariGor);
-                pnlYonetici.Controls.Add(btnSinavSonuclari);
 
                 tabPageSinav.Controls.Add(pnlYonetici);
                 
@@ -2802,36 +2787,6 @@ namespace eegProject
             {
                 MessageBox.Show(this, 
                     $"Atamalar görüntülenirken hata oluştu:\n{ex.Message}",
-                    "Hata", 
-                    MessageBoxButtons.OK, 
-                    MessageBoxIcon.Error);
-            }
-        }
-
-        /// <summary>
-        /// Yönetici - Kullanıcıların sınav sonuçlarını görüntüle
-        /// </summary>
-        private void BtnSinavSonuclari_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using (var form = new SinavSonucRaporForm(_currentUserId))
-                {
-                    form.ShowDialog(this);
-                }
-
-                // Audit log
-                Task.Run(async () => await _auditLogService.LogAsync(
-                    islem: "SinavSonuclariGoruntulendi",
-                    detay: $"Yönetici sınav sonuçlarını görüntüledi",
-                    kullaniciId: _currentUserId,
-                    kullaniciAdi: _currentUserName
-                ));
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, 
-                    $"Sınav sonuçları görüntülenirken hata oluştu:\n{ex.Message}",
                     "Hata", 
                     MessageBoxButtons.OK, 
                     MessageBoxIcon.Error);
