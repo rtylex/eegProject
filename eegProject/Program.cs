@@ -18,19 +18,34 @@ namespace eegProject
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Önce login formu göster
-            using (var loginForm = new LoginForm())
+            bool keepRunning = true;
+
+            while (keepRunning)
             {
-                if (loginForm.ShowDialog() == DialogResult.OK)
+                keepRunning = false; // Varsayılan olarak döngüden çık
+
+                // Önce login formu göster
+                using (var loginForm = new LoginForm())
                 {
-                    // Başarılı giriş - ana formu aç
-                    Application.Run(new Form1(
-                        loginForm.LoggedInUserId.Value,
-                        loginForm.LoggedInUserRole,
-                        loginForm.LoggedInUserName
-                    ));
+                    if (loginForm.ShowDialog() == DialogResult.OK)
+                    {
+                        // Başarılı giriş - ana formu aç
+                        Form1 mainForm = new Form1(
+                            loginForm.LoggedInUserId.Value,
+                            loginForm.LoggedInUserRole,
+                            loginForm.LoggedInUserName
+                        );
+
+                        Application.Run(mainForm);
+
+                        // Form kapandığında çıkış isteği var mı kontrol et
+                        if (mainForm.UserRequestedLogout)
+                        {
+                            keepRunning = true; // Döngüye devam et (Login ekranına dön)
+                        }
+                    }
+                    // Giriş iptal edildiyse loop zaten false, uygulama kapanır
                 }
-                // Giriş iptal edildi veya başarısız - uygulama kapanır
             }
         }
     }

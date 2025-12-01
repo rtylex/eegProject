@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -22,6 +22,8 @@ namespace eegProject.Forms
         private ListBox lstUsers;
         private TreeView treeOturumlar;
         private Panel pnlOzet;
+        private SplitContainer splitRight;
+        private const int SummaryPanelWidth = 320;
         private Label lblSinavAdi;
         private Label lblTarih;
         private Label lblBasari;
@@ -32,6 +34,7 @@ namespace eegProject.Forms
         private Label lblBos;
         private Button btnDetayliRapor;
         private Button btnSoruAnalizi;
+        private Button btnSinavSil;
         
         private SinavSonucu _selectedExam;
 
@@ -45,11 +48,18 @@ namespace eegProject.Forms
 
         private void InitializeComponent()
         {
+            this.SuspendLayout();
+            // 
+            // SinavSonucRaporForm
+            // 
+            this.ClientSize = new System.Drawing.Size(1182, 653);
+            this.MinimumSize = new System.Drawing.Size(1000, 600);
+            this.Name = "SinavSonucRaporForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Sınav Sonuçları Yönetimi";
-            this.Size = new Size(1200, 700);
-            this.StartPosition = FormStartPosition.CenterParent;
-            this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.MinimumSize = new Size(1000, 600);
+            this.Load += new System.EventHandler(this.SinavSonucRaporForm_Load);
+            this.ResumeLayout(false);
+
         }
 
         private void InitializeCustomComponents()
@@ -87,15 +97,16 @@ namespace eegProject.Forms
 
             splitMain.Panel1.Controls.Add(pnlUsers);
 
-            // Sağ taraf - İkinci split (Oturumlar & Özet)
-            var splitRight = new SplitContainer
+            // Sağ taraf - Oturumlar ve özet
+            splitRight = new SplitContainer
             {
                 Dock = DockStyle.Fill,
-                SplitterDistance = 400,
-                Orientation = Orientation.Horizontal
+                Orientation = Orientation.Vertical,
+                FixedPanel = FixedPanel.Panel2
             };
+            splitRight.SizeChanged += (s, e) => EnsureSplitterLayout();
 
-            // Üst - Oturumlar & Sınavlar (TreeView)
+            // Oturumlar & Sınavlar
             var pnlOturumlar = new Panel { Dock = DockStyle.Fill };
             var lblOturumlar = new Label
             {
@@ -107,6 +118,12 @@ namespace eegProject.Forms
                 Padding = new Padding(10, 0, 0, 0),
                 BackColor = Color.FromArgb(240, 240, 240)
             };
+            // Sağ tık menüsü
+            var contextMenu = new ContextMenuStrip();
+            var itemSil = new ToolStripMenuItem("🗑️ Sınavı Sil");
+            itemSil.Click += BtnSinavSil_Click;
+            contextMenu.Items.Add(itemSil);
+
             treeOturumlar = new TreeView
             {
                 Dock = DockStyle.Fill,
@@ -114,19 +131,25 @@ namespace eegProject.Forms
                 ShowLines = true,
                 ShowPlusMinus = true,
                 ShowRootLines = true,
-                FullRowSelect = true
+                FullRowSelect = true,
+                ContextMenuStrip = contextMenu
             };
             treeOturumlar.AfterSelect += TreeOturumlar_AfterSelect;
+            treeOturumlar.NodeMouseClick += (s, e) => 
+            {
+                if (e.Button == MouseButtons.Right) 
+                    treeOturumlar.SelectedNode = e.Node;
+            };
+
             pnlOturumlar.Controls.Add(treeOturumlar);
             pnlOturumlar.Controls.Add(lblOturumlar);
 
             splitRight.Panel1.Controls.Add(pnlOturumlar);
 
-            // Alt - Özet Bilgiler
+            // Sağ panel - Özet
             pnlOzet = new Panel
             {
                 Dock = DockStyle.Fill,
-                Padding = new Padding(20),
                 BackColor = Color.White
             };
             var lblOzetBaslik = new Label
@@ -141,6 +164,13 @@ namespace eegProject.Forms
             };
 
             var pnlOzetIcerik = new Panel { Dock = DockStyle.Fill, Padding = new Padding(20) };
+            var summaryLayout = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
 
             lblSinavAdi = CreateLabel("Sınav: -", 20);
             lblTarih = CreateLabel("Tarih: -", 50);
@@ -151,42 +181,71 @@ namespace eegProject.Forms
             lblYanlis = CreateLabel("✖️ Yanlış: -", 200);
             lblBos = CreateLabel("⭕ Boş: -", 230);
 
+            summaryLayout.Controls.AddRange(new Control[]
+            {
+                lblSinavAdi, lblTarih, lblBasari, lblSure,
+                lblToplamSoru, lblDogru, lblYanlis, lblBos
+            });
+
             btnDetayliRapor = new Button
             {
-                Text = "📄 Detaylı Rapor Göster",
-                Left = 20,
-                Top = 280,
-                Width = 200,
+                Text = "📝 Rapor",
+                Width = 120,
                 Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 BackColor = Color.FromArgb(0, 120, 215),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Enabled = false
+                Enabled = false,
+                Margin = new Padding(0, 0, 5, 0)
             };
             btnDetayliRapor.Click += BtnDetayliRapor_Click;
 
             btnSoruAnalizi = new Button
             {
-                Text = "🔍 Soru Bazlı Analiz",
-                Left = 240,
-                Top = 280,
-                Width = 200,
+                Text = "🔍 Analiz",
+                Width = 120,
                 Height = 40,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 BackColor = Color.FromArgb(0, 150, 136),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Enabled = false,
+                Margin = new Padding(0, 0, 5, 0)
+            };
+            btnSoruAnalizi.Click += BtnSoruAnalizi_Click;
+
+            btnSinavSil = new Button
+            {
+                Text = "🗑️ Sil",
+                Width = 100,
+                Height = 40,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = Color.FromArgb(200, 70, 70),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Enabled = false
             };
-            btnSoruAnalizi.Click += BtnSoruAnalizi_Click;
+            btnSinavSil.Click += BtnSinavSil_Click;
 
-            pnlOzetIcerik.Controls.AddRange(new Control[]
+            var actionPanel = new FlowLayoutPanel
             {
-                lblSinavAdi, lblTarih, lblBasari, lblSure,
-                lblToplamSoru, lblDogru, lblYanlis, lblBos,
-                btnDetayliRapor, btnSoruAnalizi
+                Dock = DockStyle.Bottom,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                Padding = new Padding(0, 10, 0, 0)
+            };
+            actionPanel.Controls.AddRange(new Control[]
+            {
+                btnDetayliRapor,
+                btnSoruAnalizi,
+                btnSinavSil
             });
+
+            pnlOzetIcerik.Controls.Add(summaryLayout);
+            pnlOzetIcerik.Controls.Add(actionPanel);
 
             pnlOzet.Controls.Add(pnlOzetIcerik);
             pnlOzet.Controls.Add(lblOzetBaslik);
@@ -199,14 +258,14 @@ namespace eegProject.Forms
 
         private Label CreateLabel(string text, int top)
         {
+            int marginTop = top <= 20 ? 0 : 8;
             return new Label
             {
                 Text = text,
-                Left = 20,
-                Top = top,
-                Width = 600,
-                Height = 25,
-                Font = new Font("Segoe UI", 10)
+                AutoSize = true,
+                MaximumSize = new Size(400, 0),
+                Font = new Font("Segoe UI", 10),
+                Margin = new Padding(0, marginTop, 0, 0)
             };
         }
 
@@ -224,7 +283,7 @@ namespace eegProject.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Kullanıcılar yüklenirken hata:\n{ex.Message}",
+                MessageBox.Show(this, $"KullanÄ±cÄ±lar yÃ¼klenirken hata:\n{ex.Message}",
                     "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -250,7 +309,7 @@ namespace eegProject.Forms
                 treeOturumlar.Nodes.Clear();
                 ClearOzetPanel();
 
-                // Kullanıcının tüm sınav sonuçlarını oturum bazlı çek
+                // KullanÄ±cÄ±nÄ±n tÃ¼m sÄ±nav sonuÃ§larÄ±nÄ± oturum bazlÄ± Ã§ek
                 var examResults = await _examService.GetByUserWithSessionsAsync(userId);
 
                 if (examResults.Count == 0)
@@ -261,7 +320,7 @@ namespace eegProject.Forms
                     return;
                 }
 
-                // Oturum bazlı grupla
+                // Oturum bazlÄ± grupla
                 var groupedBySession = examResults.GroupBy(e => e.OturumID);
 
                 foreach (var sessionGroup in groupedBySession.OrderByDescending(g => g.First().BaslamaTarihi))
@@ -269,7 +328,7 @@ namespace eegProject.Forms
                     var firstExam = sessionGroup.First();
                     var oturum = firstExam.Oturum;
                     
-                    var sessionNodeText = $"📁 Oturum #{oturum.OturumID} - " +
+                    var sessionNodeText = $"📂 Oturum #{oturum.OturumID} - " +
                                          $"{oturum.DeneyTuru ?? "Genel"}" +
                                          $"{(string.IsNullOrEmpty(oturum.ZamanEtiketi) ? "" : " - " + oturum.ZamanEtiketi)}" +
                                          $" ({oturum.KayitBaslangic?.ToString("dd.MM.yyyy HH:mm") ?? "Tarih yok"})";
@@ -281,6 +340,24 @@ namespace eegProject.Forms
                     // Bu oturumdaki tüm sınavlar
                     foreach (var exam in sessionGroup.OrderBy(e => e.BaslamaTarihi))
                     {
+                        // İstatistikleri veritabanından (cevaplardan) taze çek
+                        var cevaplar = await _sinavCevapService.GetByExamResultAsync(exam.SinavSonucuID);
+                        if (cevaplar != null && cevaplar.Count > 0)
+                        {
+                            var dogru = cevaplar.Count(c => c.DogruMu);
+                            var bos = cevaplar.Count(c => string.IsNullOrWhiteSpace(c.VerilenCevap));
+                            var yanlis = cevaplar.Count - dogru - bos;
+                            var toplamPuan = cevaplar.Sum(c => c.ToplamPuan ?? 0);
+                            var alinanPuan = cevaplar.Sum(c => c.AlinanPuan ?? 0);
+
+                            exam.DogruSayisi = dogru;
+                            exam.YanlisSayisi = yanlis;
+                            exam.ToplamSoru = cevaplar.Count;
+                            exam.ToplamPuan = toplamPuan;
+                            exam.AlinanPuan = alinanPuan;
+                            exam.BasariYuzdesi = (dogru * 100.0) / cevaplar.Count;
+                        }
+
                         var basariYuzdesi = exam.BasariYuzdesi ?? 0;
                         var icon = basariYuzdesi >= 70 ? "✅" : basariYuzdesi >= 50 ? "⚠️" : "❌";
                         
@@ -317,7 +394,7 @@ namespace eegProject.Forms
             }
         }
 
-        private void TreeOturumlar_AfterSelect(object sender, TreeViewEventArgs e)
+        private async void TreeOturumlar_AfterSelect(object sender, TreeViewEventArgs e)
         {
             var selectedExam = e.Node.Tag as SinavSonucu;
             if (selectedExam == null)
@@ -327,7 +404,53 @@ namespace eegProject.Forms
             }
 
             _selectedExam = selectedExam;
-            ShowExamSummary(selectedExam);
+
+            // İstatistikleri cevaplardan yeniden hesapla (DB'de 0 kalmış olabilir)
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+                var cevaplar = await _sinavCevapService.GetByExamResultAsync(selectedExam.SinavSonucuID);
+                
+                if (cevaplar != null && cevaplar.Count > 0)
+                {
+                    var dogru = cevaplar.Count(c => c.DogruMu);
+                    var bos = cevaplar.Count(c => string.IsNullOrWhiteSpace(c.VerilenCevap));
+                    var yanlis = cevaplar.Count - dogru - bos;
+                    var toplamPuan = cevaplar.Sum(c => c.ToplamPuan ?? 0);
+                    var alinanPuan = cevaplar.Sum(c => c.AlinanPuan ?? 0);
+
+                    // Nesneyi güncelle
+                    _selectedExam.DogruSayisi = dogru;
+                    _selectedExam.YanlisSayisi = yanlis;
+                    _selectedExam.ToplamSoru = cevaplar.Count;
+                    _selectedExam.ToplamPuan = toplamPuan;
+                    _selectedExam.AlinanPuan = alinanPuan;
+                    
+                    if (cevaplar.Count > 0)
+                    {
+                        _selectedExam.BasariYuzdesi = (dogru * 100.0) / cevaplar.Count;
+                    }
+
+                    // TreeView node metnini de güncelle
+                    var basariYuzdesi = _selectedExam.BasariYuzdesi ?? 0;
+                    var icon = basariYuzdesi >= 70 ? "✅" : basariYuzdesi >= 50 ? "⚠️" : "❌";
+                    
+                    e.Node.Text = $"📊 {_selectedExam.SinavTuru} {icon} - " +
+                                  $"%{basariYuzdesi:F0} " +
+                                  $"({_selectedExam.DogruSayisi}/{_selectedExam.ToplamSoru}) - " +
+                                  $"{_selectedExam.BaslamaTarihi:HH:mm}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("İstatistik hesaplama hatası: " + ex.Message);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+
+            ShowExamSummary(_selectedExam);
         }
 
         private void ShowExamSummary(SinavSonucu exam)
@@ -358,6 +481,7 @@ namespace eegProject.Forms
 
             btnDetayliRapor.Enabled = true;
             btnSoruAnalizi.Enabled = true;
+            btnSinavSil.Enabled = true;
         }
 
         private void ClearOzetPanel()
@@ -374,6 +498,7 @@ namespace eegProject.Forms
 
             btnDetayliRapor.Enabled = false;
             btnSoruAnalizi.Enabled = false;
+            btnSinavSil.Enabled = false;
             _selectedExam = null;
         }
 
@@ -385,10 +510,10 @@ namespace eegProject.Forms
             {
                 this.Cursor = Cursors.WaitCursor;
 
-                // Tüm soru cevaplarını çek
+                // TÃ¼m soru cevaplarÄ±nÄ± Ã§ek
                 var cevaplar = await _sinavCevapService.GetByExamResultAsync(_selectedExam.SinavSonucuID);
                 
-                // Detaylı rapor göster
+                // DetaylÄ± rapor gÃ¶ster
                 ShowDetailedReport(_selectedExam, cevaplar);
             }
             catch (Exception ex)
@@ -402,81 +527,161 @@ namespace eegProject.Forms
             }
         }
 
+        private async void BtnSinavSil_Click(object sender, EventArgs e)
+        {
+            if (_selectedExam == null) return;
+
+            var confirm = MessageBox.Show(this,
+                $"{_selectedExam.SinavTuru} sınavını silmek istediğinize emin misiniz?",
+                "Onay",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+
+            if (confirm != DialogResult.Yes)
+                return;
+
+            try
+            {
+                this.Cursor = Cursors.WaitCursor;
+                await _examService.DeleteAsync(_selectedExam.SinavSonucuID);
+
+                MessageBox.Show(this,
+                    "Sınav sonucu silindi.",
+                    "Bilgi",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                var selectedUser = lstUsers.SelectedItem as Kullanici;
+                if (selectedUser != null)
+                {
+                    await LoadUserSessionsWithExamsAsync(selectedUser.KullaniciID);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    $"Sınav silinirken hata oluştu:\\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        private void EnsureSplitterLayout()
+        {
+            if (splitRight == null || splitRight.Width <= 0)
+                return;
+
+            // Minimum boyut kontrolü
+            if (splitRight.Width < splitRight.Panel1MinSize + splitRight.Panel2MinSize)
+                return;
+
+            var target = splitRight.Width - SummaryPanelWidth;
+            
+            // Alt sınır kontrolü (Panel1MinSize)
+            if (target < splitRight.Panel1MinSize)
+                target = splitRight.Panel1MinSize;
+
+            // Üst sınır kontrolü (Width - Panel2MinSize)
+            var maxDist = splitRight.Width - splitRight.Panel2MinSize;
+            if (target > maxDist)
+                target = maxDist;
+
+            try
+            {
+                splitRight.SplitterDistance = target;
+            }
+            catch
+            {
+                // Olası diğer hataları yut, kritik değil
+            }
+        }
+
         private void ShowDetailedReport(SinavSonucu exam, List<SinavCevap> cevaplar)
         {
             var form = new Form
             {
                 Text = $"Detaylı Sınav Raporu - {exam.SinavTuru}",
-                Size = new Size(800, 700),
+                Size = new Size(1100, 700),
                 StartPosition = FormStartPosition.CenterParent
             };
 
-            var txt = new RichTextBox
+            // Üst Bilgi Paneli
+            var pnlInfo = new Panel 
+            { 
+                Dock = DockStyle.Top, 
+                Height = 80, 
+                BackColor = Color.WhiteSmoke, 
+                Padding = new Padding(15) 
+            };
+            
+            var lblInfo = new Label 
+            { 
+                Dock = DockStyle.Fill, 
+                Text = $"Sınav: {exam.SinavTuru} | Tarih: {exam.BaslamaTarihi:dd.MM.yyyy HH:mm}\n" +
+                       $"Oturum: #{exam.OturumID} | Başarı: %{exam.BasariYuzdesi:F1} | Puan: {exam.AlinanPuan:F1}/{exam.ToplamPuan:F1}",
+                Font = new Font("Segoe UI", 11),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            pnlInfo.Controls.Add(lblInfo);
+
+            // Grid
+            var grid = new DataGridView
             {
                 Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
                 ReadOnly = true,
-                Font = new Font("Consolas", 10),
-                BackColor = Color.White
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 10),
+                RowTemplate = { Height = 35 }
             };
 
-            var sb = new StringBuilder();
-            sb.AppendLine("╔" + new string('═', 70) + "╗");
-            sb.AppendLine("║" + "           DETAYLI SINAV RAPORU".PadLeft(45).PadRight(70) + "║");
-            sb.AppendLine("╚" + new string('═', 70) + "╝");
-            sb.AppendLine();
-            sb.AppendLine($"Sınav: {exam.SinavTuru}");
-            sb.AppendLine($"Tarih: {exam.BaslamaTarihi:dd.MM.yyyy HH:mm}");
-            sb.AppendLine($"Oturum: #{exam.OturumID} - {exam.Oturum?.DeneyTuru ?? "Genel"}");
-            sb.AppendLine();
-            sb.AppendLine("─────────────────────────────────────────────────────────────────");
-            sb.AppendLine($"Toplam Soru   : {exam.ToplamSoru}");
-            sb.AppendLine($"Doğru         : {exam.DogruSayisi}");
-            sb.AppendLine($"Yanlış        : {exam.YanlisSayisi}");
-            sb.AppendLine($"Boş           : {exam.ToplamSoru - exam.DogruSayisi - exam.YanlisSayisi}");
-            sb.AppendLine();
-            sb.AppendLine($"Başarı Oranı  : %{exam.BasariYuzdesi ?? 0:F1}");
-            
-            if (exam.ToplamPuan.HasValue)
-            {
-                sb.AppendLine($"Alınan Puan   : {exam.AlinanPuan ?? 0:F1} / {exam.ToplamPuan:F1}");
-            }
-            
-            if (exam.OrtalamaCevapSuresi.HasValue)
-            {
-                sb.AppendLine($"Ort. Süre     : {exam.OrtalamaCevapSuresi:F0} saniye/soru");
-            }
-            
-            sb.AppendLine("─────────────────────────────────────────────────────────────────");
-            sb.AppendLine();
-            sb.AppendLine("SORU BAZLI DETAYLAR:");
-            sb.AppendLine();
+            grid.Columns.Add("No", "No");
+            grid.Columns[0].Width = 50;
+            grid.Columns.Add("Tip", "Soru Tipi");
+            grid.Columns.Add("Soru", "Soru Özeti");
+            grid.Columns.Add("Durum", "Durum");
+            grid.Columns.Add("Verilen", "Verilen Cevap");
+            grid.Columns.Add("Dogru", "Doğru Cevap");
+            grid.Columns.Add("Sure", "Süre (sn)");
+            grid.Columns.Add("Puan", "Puan");
 
             foreach (var cevap in cevaplar.OrderBy(c => c.SoruNo))
             {
-                string icon = cevap.DogruMu ? "[✓]" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "[ ]" : "[✗]";
-                string status = cevap.DogruMu ? "DOĞRU" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "BOŞ" : "YANLIŞ";
+                var status = cevap.DogruMu ? "DOĞRU" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "BOŞ" : "YANLIŞ";
+                var soruOzet = string.IsNullOrWhiteSpace(cevap.SoruMetni) ? "" : 
+                              cevap.SoruMetni.Length > 50 ? cevap.SoruMetni.Substring(0, 47) + "..." : cevap.SoruMetni;
 
-                sb.AppendLine($"{icon} Soru {cevap.SoruNo} ({cevap.SoruTipi}): {status}");
-
-                if (cevap.SoruTipi == "Klasik" && cevap.EslesmeYuzdesi.HasValue)
-                {
-                    sb.AppendLine($"    Eşleşme: %{cevap.EslesmeYuzdesi:F0} - Puan: {cevap.AlinanPuan:F1}/{cevap.ToplamPuan}");
-                }
-                else if (!string.IsNullOrWhiteSpace(cevap.VerilenCevap))
-                {
-                    sb.AppendLine($"    Cevabınız: {cevap.VerilenCevap} | Doğru: {cevap.DogruCevap}");
-                }
-
-                if (cevap.CevaplamaSuresi.HasValue)
-                {
-                    sb.AppendLine($"    Süre: {cevap.CevaplamaSuresi.Value}sn");
-                }
-
-                sb.AppendLine();
+                var rowIndex = grid.Rows.Add(
+                    cevap.SoruNo,
+                    cevap.SoruTipi,
+                    soruOzet,
+                    status,
+                    cevap.VerilenCevap,
+                    cevap.DogruCevap,
+                    cevap.CevaplamaSuresi,
+                    cevap.AlinanPuan
+                );
+                
+                var row = grid.Rows[rowIndex];
+                if (cevap.DogruMu) 
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(220, 255, 220); // Açık yeşil
+                else if (string.IsNullOrWhiteSpace(cevap.VerilenCevap)) 
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 255, 240); // Açık sarı
+                else 
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 220, 220); // Açık kırmızı
             }
 
-            txt.Text = sb.ToString();
-
+            // Kapat Butonu
             var btnClose = new Button
             {
                 Text = "Kapat",
@@ -486,7 +691,8 @@ namespace eegProject.Forms
                 DialogResult = DialogResult.OK
             };
 
-            form.Controls.Add(txt);
+            form.Controls.Add(grid);
+            form.Controls.Add(pnlInfo);
             form.Controls.Add(btnClose);
             form.ShowDialog(this);
         }
@@ -519,27 +725,41 @@ namespace eegProject.Forms
             var form = new Form
             {
                 Text = $"Soru Bazlı Analiz - {exam.SinavTuru}",
-                Size = new Size(900, 700),
+                Size = new Size(1000, 750),
                 StartPosition = FormStartPosition.CenterParent
             };
 
-            var txt = new RichTextBox
+            var split = new SplitContainer
             {
                 Dock = DockStyle.Fill,
-                ReadOnly = true,
-                Font = new Font("Consolas", 9),
-                BackColor = Color.White
+                Orientation = Orientation.Horizontal,
+                SplitterDistance = 200,
+                FixedPanel = FixedPanel.Panel1
             };
 
-            var sb = new StringBuilder();
-            sb.AppendLine("╔" + new string('═', 80) + "╗");
-            sb.AppendLine("║" + "           SORU BAZLI PERFORMANS ANALİZİ".PadLeft(50).PadRight(80) + "║");
-            sb.AppendLine("╚" + new string('═', 80) + "╝");
-            sb.AppendLine();
-
-            // Soru tipi bazlı analiz
-            var groupedByType = cevaplar.GroupBy(c => c.SoruTipi);
+            // 1. Üst Panel: Tip Bazlı Özet (Grid)
+            var gridSummary = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                BackgroundColor = Color.WhiteSmoke,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 10)
+            };
             
+            gridSummary.Columns.Add("Tip", "Soru Tipi");
+            gridSummary.Columns.Add("Toplam", "Toplam");
+            gridSummary.Columns.Add("Dogru", "Doğru");
+            gridSummary.Columns.Add("Yanlis", "Yanlış");
+            gridSummary.Columns.Add("Bos", "Boş");
+            gridSummary.Columns.Add("Basari", "Başarı (%)");
+            gridSummary.Columns.Add("Sure", "Ort. Süre (sn)");
+
+            var groupedByType = cevaplar.GroupBy(c => c.SoruTipi);
             foreach (var group in groupedByType)
             {
                 var total = group.Count();
@@ -547,56 +767,90 @@ namespace eegProject.Forms
                 var wrong = group.Count(c => !c.DogruMu && !string.IsNullOrWhiteSpace(c.VerilenCevap));
                 var empty = group.Count(c => string.IsNullOrWhiteSpace(c.VerilenCevap));
                 var successRate = total > 0 ? (correct * 100.0 / total) : 0;
+                var avgTime = group.Where(c => c.CevaplamaSuresi.HasValue).Average(c => c.CevaplamaSuresi.Value);
 
-                sb.AppendLine($"📊 {group.Key}:");
-                sb.AppendLine($"   Toplam: {total} | ✔️ Doğru: {correct} | ✗ Yanlış: {wrong} | ⭕ Boş: {empty}");
-                sb.AppendLine($"   Başarı: %{successRate:F1}");
-                
-                if (group.Any(c => c.CevaplamaSuresi.HasValue))
-                {
-                    var avgTime = group.Where(c => c.CevaplamaSuresi.HasValue)
-                                      .Average(c => c.CevaplamaSuresi.Value);
-                    sb.AppendLine($"   Ortalama Süre: {avgTime:F0}sn");
-                }
-                
-                sb.AppendLine();
+                gridSummary.Rows.Add(
+                    group.Key,
+                    total,
+                    correct,
+                    wrong,
+                    empty,
+                    $"%{successRate:F1}",
+                    $"{avgTime:F1}"
+                );
             }
 
-            sb.AppendLine("─────────────────────────────────────────────────────────────────────────────");
-            sb.AppendLine("SORU DETAYLARI:");
-            sb.AppendLine();
+            var lblSummaryTitle = new Label 
+            { 
+                Text = "TİP BAZLI PERFORMANS ÖZETİ", 
+                Dock = DockStyle.Top, 
+                Height = 30, 
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10,0,0,0)
+            };
+
+            split.Panel1.Controls.Add(gridSummary);
+            split.Panel1.Controls.Add(lblSummaryTitle);
+
+            // 2. Alt Panel: Detaylı Analiz (Grid)
+            var gridDetails = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Segoe UI", 9)
+            };
+
+            gridDetails.Columns.Add("No", "No");
+            gridDetails.Columns[0].Width = 40;
+            gridDetails.Columns.Add("Tip", "Tip");
+            gridDetails.Columns.Add("Soru", "Soru");
+            gridDetails.Columns.Add("Durum", "Durum");
+            gridDetails.Columns.Add("Sure", "Süre");
+            gridDetails.Columns.Add("Analiz", "Analiz Notu");
 
             foreach (var cevap in cevaplar.OrderBy(c => c.SoruNo))
             {
-                var icon = cevap.DogruMu ? "✓" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? " " : "✗";
-                sb.AppendLine($"[{icon}] Soru {cevap.SoruNo} - {cevap.SoruTipi}");
-                
-                if (!string.IsNullOrWhiteSpace(cevap.SoruMetni))
-                {
-                    var maxLen = Math.Min(70, cevap.SoruMetni.Length);
-                    sb.AppendLine($"    {cevap.SoruMetni.Substring(0, maxLen)}...");
-                }
-                
-                if (!string.IsNullOrWhiteSpace(cevap.VerilenCevap))
-                {
-                    sb.AppendLine($"    Verilen: {cevap.VerilenCevap} | Doğru: {cevap.DogruCevap}");
-                }
-                
-                if (cevap.CevaplamaSuresi.HasValue)
-                {
-                    sb.AppendLine($"    ⏱️ Süre: {cevap.CevaplamaSuresi}sn");
-                }
-                
+                var status = cevap.DogruMu ? "DOĞRU" : string.IsNullOrWhiteSpace(cevap.VerilenCevap) ? "BOŞ" : "YANLIŞ";
+                var analysisNote = "";
                 if (cevap.SoruTipi == "Klasik" && cevap.EslesmeYuzdesi.HasValue)
-                {
-                    sb.AppendLine($"    📊 Eşleşme: %{cevap.EslesmeYuzdesi:F0} - Puan: {cevap.AlinanPuan:F1}/{cevap.ToplamPuan}");
-                }
+                    analysisNote = $"Eşleşme: %{cevap.EslesmeYuzdesi:F0}";
                 
-                sb.AppendLine();
+                var rowIndex = gridDetails.Rows.Add(
+                    cevap.SoruNo,
+                    cevap.SoruTipi,
+                    cevap.SoruMetni,
+                    status,
+                    cevap.CevaplamaSuresi + "sn",
+                    analysisNote
+                );
+
+                var row = gridDetails.Rows[rowIndex];
+                if (cevap.DogruMu) row.DefaultCellStyle.ForeColor = Color.Green;
+                else if (status == "YANLIŞ") row.DefaultCellStyle.ForeColor = Color.Red;
             }
 
-            txt.Text = sb.ToString();
+            var lblDetailsTitle = new Label 
+            { 
+                Text = "SORU DETAYLARI", 
+                Dock = DockStyle.Top, 
+                Height = 30, 
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(10,0,0,0)
+            };
 
+            split.Panel2.Controls.Add(gridDetails);
+            split.Panel2.Controls.Add(lblDetailsTitle);
+
+            // Kapat Butonu
             var btnClose = new Button
             {
                 Text = "Kapat",
@@ -606,10 +860,15 @@ namespace eegProject.Forms
                 DialogResult = DialogResult.OK
             };
 
-            form.Controls.Add(txt);
+            form.Controls.Add(split);
             form.Controls.Add(btnClose);
             form.ShowDialog(this);
         }
+        private void SinavSonucRaporForm_Load(object sender, EventArgs e)
+        {
+            EnsureSplitterLayout();
+        }
     }
 }
+
 

@@ -89,8 +89,18 @@ namespace eegProject.Forms
             }
             catch (Exception ex)
             {
-                await _auditLogService.LogAsync("GirisHatasi", $"Giris hatasi: {ex.Message}", null, email, "Error");
-                MessageBox.Show(this, "Giris sirasinda hata olustu: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                var message = ex.Message;
+                if (ex.InnerException != null)
+                {
+                    message += "\n\nDetay: " + ex.InnerException.Message;
+                    if (ex.InnerException.InnerException != null)
+                    {
+                        message += "\n\nAlt Detay: " + ex.InnerException.InnerException.Message;
+                    }
+                }
+
+                await _auditLogService.LogAsync("GirisHatasi", $"Giris hatasi: {message}", null, email, "Error");
+                MessageBox.Show(this, "Giris sirasinda hata olustu: " + message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

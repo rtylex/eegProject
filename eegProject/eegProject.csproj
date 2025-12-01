@@ -180,6 +180,9 @@
     <EmbeddedResource Include="Forms\DeneyTuruManageForm.resx">
       <DependentUpon>DeneyTuruManageForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Forms\ExportOptionsForm.resx">
+      <DependentUpon>ExportOptionsForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\LoginForm.resx">
       <DependentUpon>LoginForm.cs</DependentUpon>
     </EmbeddedResource>

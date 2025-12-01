@@ -69,7 +69,7 @@ namespace eegProject.Services
             }
 
             var prompt = BuildComparativePrompt(userName, experimentType, analysesJson, null);
-            return await CallOpenAiAsync(prompt, maxTokens: 800);
+            return await CallOpenAiAsync(prompt, maxTokens: 1500);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace eegProject.Services
             }
 
             var prompt = BuildComparativePrompt(userName, experimentType, analysesJson, examDataJson);
-            return await CallOpenAiAsync(prompt, maxTokens: 1200);
+            return await CallOpenAiAsync(prompt, maxTokens: 3000);
         }
 
         /// <summary>
@@ -236,7 +236,8 @@ Gorev:
 6. Deney etkisini BAZALA GORE degerlendir
 {(hasExamData ? "7. SINAV SONUCLARI ile EEG metriklerini KORELE et (cok onemli!)" : "")}
 
-Format:
+Format (Her basliktan sonra MUTLAKA yeni satira gec):
+
 OZET:
 [BAZAL referans degeri + genel karsilastirma - 2 cumle]
 
@@ -257,10 +258,14 @@ SINAV-EEG KORELASYONU:
 DEGERLENDIRME:
 [Bazala gore genel yorumlama - deney basarili mi? Hangi kosulda daha iyi?{(hasExamData ? " Sinav sonuclari degerlendirmeyi nasil etkiliyor?" : "")}]
 
+SONUC VE KAZANAN:
+[NET CEVAP: Hangi oturumda performans en iyi? (Orn: ""Dikkat acisindan en iyi performans 30dk oturumunda gozlemlenmistir."")]
+[Neden bu oturum kazandi? (Kisa gerekce)]
+
 ONERI: (opsiyonel)
 [Pratik oneri]
 
-Maksimum {(hasExamData ? "800" : "500")} kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma!
+Maksimum {(hasExamData ? "1500" : "800")} kelime. Turkce, bilimsel ama anlasilir dil. BAZAL vurgusunu unutma! Basliklari ayri satirda yaz.
 ";
         }
 

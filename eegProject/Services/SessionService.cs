@@ -133,12 +133,51 @@ namespace eegProject.Services
 
             using (var context = DbContextFactory.Create())
             {
-                var session = await context.Oturum.FirstOrDefaultAsync(o => o.OturumID == sessionId);
+                var session = await context.Oturum
+                    .Include(o => o.AnalizSonucu)
+                    .Include(o => o.EEGVerisi)
+                    .Include(o => o.SinavAtama)
+                    .Include(o => o.SinavSonucu)
+                    .Include(o => o.SinavSonucu.Select(ss => ss.SinavCevap))
+                    .FirstOrDefaultAsync(o => o.OturumID == sessionId);
+
                 if (session == null)
                 {
                     return;
                 }
 
+                // 1. Unlink SinavAtama (Assignments)
+                // Oturum silindiğinde atama boşa çıkar, tekrar atanabilir/tamamlanabilir hale gelir.
+                foreach (var atama in session.SinavAtama.ToList())
+                {
+                    atama.OturumID = null;
+                    atama.TamamlandiMi = false;
+                    atama.TamamlanmaTarihi = null;
+                }
+
+                // 2. Delete SinavSonucu (Exam Results) and their Answers
+                foreach (var sonuc in session.SinavSonucu.ToList())
+                {
+                    if (sonuc.SinavCevap != null)
+                    {
+                        context.SinavCevap.RemoveRange(sonuc.SinavCevap);
+                    }
+                    context.SinavSonucu.Remove(sonuc);
+                }
+
+                // 3. Delete AnalizSonucu (Analysis Results)
+                if (session.AnalizSonucu != null)
+                {
+                    context.AnalizSonucu.RemoveRange(session.AnalizSonucu);
+                }
+
+                // 4. Delete EEGVerisi (EEG Data)
+                if (session.EEGVerisi != null)
+                {
+                    context.EEGVerisi.RemoveRange(session.EEGVerisi);
+                }
+
+                // 5. Delete Session
                 context.Oturum.Remove(session);
                 await context.SaveChangesAsync();
             }
