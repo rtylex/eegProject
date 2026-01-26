@@ -145,6 +145,49 @@ namespace eegProject
             }
         }
 
+        private void InitializeAiProviderComboBox()
+        {
+            cmbAiProvider.Items.Clear();
+            cmbAiProvider.Items.Add("OpenAI (ChatGPT)");
+            cmbAiProvider.Items.Add("Google Gemini");
+            
+            // Mevcut provider'ı seç
+            try
+            {
+                var currentProvider = System.Configuration.ConfigurationManager.AppSettings["AI_Provider"] ?? "openai";
+                cmbAiProvider.SelectedIndex = currentProvider.ToLowerInvariant() == "gemini" ? 1 : 0;
+            }
+            catch
+            {
+                cmbAiProvider.SelectedIndex = 0;
+            }
+            
+            cmbAiProvider.SelectedIndexChanged += CmbAiProvider_SelectedIndexChanged;
+        }
+
+        private void CmbAiProvider_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Seçilen provider'a göre servisi güncelle
+            string provider = cmbAiProvider.SelectedIndex == 1 ? "gemini" : "openai";
+            try
+            {
+                // Not: Runtime'da provider değiştirmek için yeni instance oluşturulacak
+                // veya önbellekteki instance güncellenecek
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"AI Provider degistirilirken hata: {ex.Message}", "Uyari", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Seçili AI provider ismini döner
+        /// </summary>
+        private string GetSelectedAiProvider()
+        {
+            return cmbAiProvider.SelectedIndex == 1 ? "gemini" : "openai";
+        }
+
         private async Task ConfigureUIByRoleAsync()
         {
             // Form ba�l���nda kullan�c� bilgisini g�ster
@@ -551,6 +594,7 @@ namespace eegProject
         private async void Form1_Load(object sender, EventArgs e)
         {
             InitializeLogoutButton();
+            InitializeAiProviderComboBox();
             await LoadLookupAsync();
             
             // Rol bazl� UI yap�land�rmas� (mod�l yetkileri dahil)
@@ -989,7 +1033,7 @@ namespace eegProject
                 {
                     SetUserBusyState(true);
                     var passwordHash = PasswordHasher.HashPassword(dialog.Password);
-                    var created = await _userService.CreateAsync(dialog.UserName, dialog.Email, passwordHash, dialog.Role);
+                    var created = await _userService.CreateAsync(dialog.UserName, dialog.Email, passwordHash, dialog.Role, dialog.SelectedDeneyGrubuId);
                     _users.Add(created);
                     gridUsers.ClearSelection();
                     var index = _users.IndexOf(created);
@@ -1029,10 +1073,11 @@ namespace eegProject
                 try
                 {
                     SetUserBusyState(true);
-                    await _userService.UpdateAsync(selected.KullaniciID, dialog.UserName, dialog.Email, dialog.Role);
+                    await _userService.UpdateAsync(selected.KullaniciID, dialog.UserName, dialog.Email, dialog.Role, dialog.SelectedDeneyGrubuId);
                     selected.AdSoyad = dialog.UserName;
                     selected.Email = dialog.Email;
                     selected.Rol = dialog.Role;
+                    selected.DeneyGrubuID = dialog.SelectedDeneyGrubuId;
                     gridUsers.Refresh();
                     UpdateSessionUserNames(selected.KullaniciID, selected.AdSoyad);
                     if (!string.IsNullOrWhiteSpace(dialog.Password))
@@ -2480,6 +2525,10 @@ namespace eegProject
                 var includeExamResults = chkIncludeExam.Checked;
                 var sessionIds = selectedSessions.Select(s => s.OturumID).ToList();
                 var baselineSessionId = baselineSession.OturumID;
+                
+                // Secili AI provider'i al
+                string selectedProvider = GetSelectedAiProvider();
+
                 try
                 {
                     SetAnalysisBusyState(true);
@@ -2491,7 +2540,8 @@ namespace eegProject
                         analysisType,
                         baselineSessionId, // BAZAL OTURUM ID
                         useAI,
-                        includeExamResults);
+                        includeExamResults,
+                        selectedProvider); // AI Provider Eklendi
                     // Veritaban�na kaydet
                     var saved = await _analysisService.CreateAsync(result);
                     // Grid'i yenile
@@ -4185,9 +4235,27 @@ namespace eegProject
             await LoadLookupAsync();
         }
 
+        private async void btnManageDeneyGruplari_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new DeneyGrubuManageForm())
+            {
+                dialog.ShowDialog(this);
+            }
+            await RefreshUsersAsync();
+        }
+
         private void gridAnalyses_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
+        }
+
+        private void btnNeuroISComparison_Click(object sender, EventArgs e)
+        {
+            string selectedProvider = GetSelectedAiProvider();
+            using (var form = new GrupKarsilastirmaForm(_analysisComputationService, selectedProvider))
+            {
+                form.ShowDialog(this);
+            }
         }
 
         private void panelAnalysisActions_Paint(object sender, PaintEventArgs e)

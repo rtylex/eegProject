@@ -31,6 +31,7 @@ namespace eegProject
         public System.DateTime KayitTarihi { get; set; }
         public string Rol { get; set; }
         public string Notlar { get; set; }
+        public Nullable<int> DeneyGrubuID { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<EEGVerisi> EEGVerisi { get; set; }
@@ -42,5 +43,6 @@ namespace eegProject
         public virtual ICollection<SinavAtama> SinavAtama { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<SinavAtama> SinavAtama1 { get; set; }
+        public virtual DeneyGrubu DeneyGrubu { get; set; }
     }
 }

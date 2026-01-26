@@ -71,6 +71,9 @@
     <Compile Include="AuditLog.cs">
       <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
+    <Compile Include="DeneyGrubu.cs">
+      <DependentUpon>Model1.tt</DependentUpon>
+    </Compile>
     <Compile Include="DeneyTuru.cs">
       <DependentUpon>Model1.tt</DependentUpon>
     </Compile>
@@ -118,6 +121,7 @@
     <Compile Include="Services\LookupService.cs" />
     <Compile Include="Services\DeneyTuruService.cs" />
     <Compile Include="Services\ZamanEtiketiService.cs" />
+    <Compile Include="Services\DeneyGrubuService.cs" />
     <Compile Include="Services\MindwaveStreamService.cs" />
     <Compile Include="Services\ModulYetkisiService.cs" />
     <Compile Include="Security\PasswordHasher.cs" />
@@ -131,6 +135,12 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\ZamanEtiketiManageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\DeneyGrubuManageForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\GrupKarsilastirmaForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\SessionEditForm.cs">

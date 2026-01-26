@@ -19,6 +19,7 @@ namespace eegProject.Forms
         private readonly ComboBox _cmbUser;
         private readonly ComboBox _cmbExperimentType;
         private readonly ComboBox _cmbTimeLabel;
+        private readonly ComboBox _cmbOturumTipi;
         private readonly DateTimePicker _dtStart;
         private readonly DateTimePicker _dtEnd;
         private readonly TextBox _txtNotes;
@@ -28,6 +29,7 @@ namespace eegProject.Forms
         public int SelectedUserId => (_cmbUser.SelectedItem as UserItem)?.Id ?? 0;
         public string SelectedExperimentType => _cmbExperimentType.Text.Trim();
         public string SelectedTimeLabel => _cmbTimeLabel.Text.Trim();
+        public string SelectedOturumTipi => string.IsNullOrWhiteSpace(_cmbOturumTipi.Text) ? null : _cmbOturumTipi.Text.Trim();
         public DateTime? SelectedStart => _dtStart.Checked ? (DateTime?)_dtStart.Value : null;
         public DateTime? SelectedEnd => _dtEnd.Checked ? (DateTime?)_dtEnd.Value : null;
         public string Notes => string.IsNullOrWhiteSpace(_txtNotes.Text) ? null : _txtNotes.Text.Trim();
@@ -40,7 +42,7 @@ namespace eegProject.Forms
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(520, 420);
+            ClientSize = new Size(520, 460);
 
             _users = new BindingList<UserItem>(users?
                 .Select(u => new UserItem { Id = u.KullaniciID, Name = string.IsNullOrWhiteSpace(u.AdSoyad) ? "(Isimsiz)" : u.AdSoyad })
@@ -51,14 +53,14 @@ namespace eegProject.Forms
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 6,
+                RowCount = 7,
                 Padding = new Padding(12)
             };
 
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
 
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 6; i++)
             {
                 layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
             }
@@ -104,6 +106,15 @@ namespace eegProject.Forms
                 .Cast<object>()
                 .ToArray());
 
+            var lblOturumTipi = new Label { Text = "Oturum Tipi", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
+            _cmbOturumTipi = new ComboBox
+            {
+                Dock = DockStyle.Fill,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            _cmbOturumTipi.Items.AddRange(new object[] { "", "Bazal", "Gorev" });
+            _cmbOturumTipi.SelectedIndex = 0;
+
             var lblStart = new Label { Text = "Baslangic", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
             _dtStart = new DateTimePicker
             {
@@ -140,12 +151,14 @@ namespace eegProject.Forms
             layout.Controls.Add(_cmbExperimentType, 1, 1);
             layout.Controls.Add(lblTime, 0, 2);
             layout.Controls.Add(_cmbTimeLabel, 1, 2);
-            layout.Controls.Add(lblStart, 0, 3);
-            layout.Controls.Add(_dtStart, 1, 3);
-            layout.Controls.Add(lblEnd, 0, 4);
-            layout.Controls.Add(_dtEnd, 1, 4);
-            layout.Controls.Add(lblNotes, 0, 5);
-            layout.Controls.Add(_txtNotes, 1, 5);
+            layout.Controls.Add(lblOturumTipi, 0, 3);
+            layout.Controls.Add(_cmbOturumTipi, 1, 3);
+            layout.Controls.Add(lblStart, 0, 4);
+            layout.Controls.Add(_dtStart, 1, 4);
+            layout.Controls.Add(lblEnd, 0, 5);
+            layout.Controls.Add(_dtEnd, 1, 5);
+            layout.Controls.Add(lblNotes, 0, 6);
+            layout.Controls.Add(_txtNotes, 1, 6);
 
             var panelButtons = new FlowLayoutPanel
             {
@@ -229,6 +242,11 @@ namespace eegProject.Forms
                 {
                     _txtNotes.Text = existing.Notlar;
                 }
+
+                if (!string.IsNullOrWhiteSpace(existing.OturumTipi))
+                {
+                    _cmbOturumTipi.SelectedItem = existing.OturumTipi;
+                }
             }
         }
 
@@ -240,6 +258,7 @@ namespace eegProject.Forms
                 KullaniciID = SelectedUserId,
                 ZamanEtiketi = string.IsNullOrWhiteSpace(SelectedTimeLabel) ? null : SelectedTimeLabel,
                 DeneyTuru = string.IsNullOrWhiteSpace(SelectedExperimentType) ? null : SelectedExperimentType,
+                OturumTipi = SelectedOturumTipi,
                 KayitBaslangic = SelectedStart,
                 KayitBitis = SelectedEnd,
                 Notlar = Notes

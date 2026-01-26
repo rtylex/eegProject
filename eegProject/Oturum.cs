@@ -32,6 +32,7 @@ namespace eegProject
         public string Notlar { get; set; }
         public Nullable<int> DeneyTuruID { get; set; }
         public Nullable<int> ZamanEtiketiID { get; set; }
+        public string OturumTipi { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<AnalizSonucu> AnalizSonucu { get; set; }

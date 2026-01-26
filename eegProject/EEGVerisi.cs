@@ -27,6 +27,7 @@ namespace eegProject
         public Nullable<double> HighGamma { get; set; }
         public Nullable<int> BlinkStrength { get; set; }
         public System.DateTime KayitZamani { get; set; }
+        public Nullable<int> SinyalKalitesi { get; set; }
     
         public virtual Kullanici Kullanici { get; set; }
         public virtual Oturum Oturum { get; set; }

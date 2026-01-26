@@ -46,6 +46,7 @@ namespace eegProject
             this.btnDeleteEegData = new System.Windows.Forms.Button();
             this.btnManageExperimentTypes = new System.Windows.Forms.Button();
             this.btnManageTimeLabels = new System.Windows.Forms.Button();
+            this.btnManageDeneyGruplari = new System.Windows.Forms.Button();
             this.tabPageEEG = new System.Windows.Forms.TabPage();
             this.gridEEG = new System.Windows.Forms.DataGridView();
             this.cmbEegSessions = new System.Windows.Forms.ComboBox();
@@ -60,6 +61,9 @@ namespace eegProject
             this.btnBatchComparison = new System.Windows.Forms.Button();
             this.btnViewMetrics = new System.Windows.Forms.Button();
             this.btnDeleteAnalysis = new System.Windows.Forms.Button();
+            this.btnNeuroISComparison = new System.Windows.Forms.Button();
+            this.cmbAiProvider = new System.Windows.Forms.ComboBox();
+            this.lblAiProvider = new System.Windows.Forms.Label();
             this.tabPageExport = new System.Windows.Forms.TabPage();
             this.cmbExportUser = new System.Windows.Forms.ComboBox();
             this.cmbExportScope = new System.Windows.Forms.ComboBox();
@@ -124,6 +128,7 @@ namespace eegProject
             this.tabPageUsers.Controls.Add(this.btnEditUser);
             this.tabPageUsers.Controls.Add(this.btnDeleteUser);
             this.tabPageUsers.Controls.Add(this.btnResetPassword);
+            this.tabPageUsers.Controls.Add(this.btnManageDeneyGruplari);
             this.tabPageUsers.Location = new System.Drawing.Point(4, 22);
             this.tabPageUsers.Name = "tabPageUsers";
             this.tabPageUsers.Padding = new System.Windows.Forms.Padding(3);
@@ -189,6 +194,16 @@ namespace eegProject
             this.btnResetPassword.Text = "Şifre Sıfırla";
             this.btnResetPassword.UseVisualStyleBackColor = true;
             this.btnResetPassword.Click += new System.EventHandler(this.btnResetPassword_Click);
+            // 
+            // btnManageDeneyGruplari
+            // 
+            this.btnManageDeneyGruplari.Location = new System.Drawing.Point(820, 151);
+            this.btnManageDeneyGruplari.Name = "btnManageDeneyGruplari";
+            this.btnManageDeneyGruplari.Size = new System.Drawing.Size(100, 23);
+            this.btnManageDeneyGruplari.TabIndex = 6;
+            this.btnManageDeneyGruplari.Text = "Deney Grupları";
+            this.btnManageDeneyGruplari.UseVisualStyleBackColor = true;
+            this.btnManageDeneyGruplari.Click += new System.EventHandler(this.btnManageDeneyGruplari_Click);
             // 
             // tabPageSessions
             // 
@@ -366,6 +381,9 @@ namespace eegProject
             this.tabPageAnalysis.Controls.Add(this.btnBatchComparison);
             this.tabPageAnalysis.Controls.Add(this.btnViewMetrics);
             this.tabPageAnalysis.Controls.Add(this.btnDeleteAnalysis);
+            this.tabPageAnalysis.Controls.Add(this.btnNeuroISComparison);
+            this.tabPageAnalysis.Controls.Add(this.cmbAiProvider);
+            this.tabPageAnalysis.Controls.Add(this.lblAiProvider);
             this.tabPageAnalysis.Location = new System.Drawing.Point(4, 22);
             this.tabPageAnalysis.Name = "tabPageAnalysis";
             this.tabPageAnalysis.Padding = new System.Windows.Forms.Padding(3);
@@ -432,6 +450,34 @@ namespace eegProject
             this.btnDeleteAnalysis.Text = "Sil";
             this.btnDeleteAnalysis.UseVisualStyleBackColor = true;
             this.btnDeleteAnalysis.Click += new System.EventHandler(this.btnDeleteAnalysis_Click);
+            // 
+            // btnNeuroISComparison
+            // 
+            this.btnNeuroISComparison.Location = new System.Drawing.Point(820, 151);
+            this.btnNeuroISComparison.Name = "btnNeuroISComparison";
+            this.btnNeuroISComparison.Size = new System.Drawing.Size(100, 23);
+            this.btnNeuroISComparison.TabIndex = 6;
+            this.btnNeuroISComparison.Text = "Grup Karşılaştır";
+            this.btnNeuroISComparison.UseVisualStyleBackColor = true;
+            this.btnNeuroISComparison.Click += new System.EventHandler(this.btnNeuroISComparison_Click);
+            // 
+            // lblAiProvider
+            // 
+            this.lblAiProvider.AutoSize = true;
+            this.lblAiProvider.Location = new System.Drawing.Point(820, 190);
+            this.lblAiProvider.Name = "lblAiProvider";
+            this.lblAiProvider.Size = new System.Drawing.Size(60, 13);
+            this.lblAiProvider.TabIndex = 7;
+            this.lblAiProvider.Text = "AI Modeli:";
+            // 
+            // cmbAiProvider
+            // 
+            this.cmbAiProvider.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbAiProvider.FormattingEnabled = true;
+            this.cmbAiProvider.Location = new System.Drawing.Point(820, 206);
+            this.cmbAiProvider.Name = "cmbAiProvider";
+            this.cmbAiProvider.Size = new System.Drawing.Size(100, 21);
+            this.cmbAiProvider.TabIndex = 8;
             // 
             // tabPageExport
             // 
@@ -714,6 +760,7 @@ namespace eegProject
         private System.Windows.Forms.Button btnEditUser;
         private System.Windows.Forms.Button btnDeleteUser;
         private System.Windows.Forms.Button btnResetPassword;
+        private System.Windows.Forms.Button btnManageDeneyGruplari;
 
         private System.Windows.Forms.DataGridView gridSessions;
         private System.Windows.Forms.Button btnRefreshSessions;
@@ -737,6 +784,9 @@ namespace eegProject
         private System.Windows.Forms.Button btnBatchComparison;
         private System.Windows.Forms.Button btnViewMetrics;
         private System.Windows.Forms.Button btnDeleteAnalysis;
+        private System.Windows.Forms.Button btnNeuroISComparison;
+        private System.Windows.Forms.ComboBox cmbAiProvider;
+        private System.Windows.Forms.Label lblAiProvider;
 
         private System.Windows.Forms.ComboBox cmbExportUser;
         private System.Windows.Forms.ComboBox cmbExportScope;

@@ -31,6 +31,16 @@
           <Property Name="Detay" Type="nvarchar(max)" />
           <Property Name="Seviye" Type="nvarchar" MaxLength="20" Nullable="false" />
         </EntityType>
+        <EntityType Name="DeneyGrubu">
+          <Key>
+            <PropertyRef Name="DeneyGrubuID" />
+          </Key>
+          <Property Name="DeneyGrubuID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="GrupAdi" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="Aciklama" Type="nvarchar" MaxLength="500" />
+          <Property Name="Aktif" Type="bit" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="datetime" Nullable="false" />
+        </EntityType>
         <EntityType Name="DeneyTuru">
           <Key>
             <PropertyRef Name="DeneyTuruID" />
@@ -58,6 +68,7 @@
           <Property Name="HighGamma" Type="float" />
           <Property Name="BlinkStrength" Type="int" />
           <Property Name="KayitZamani" Type="datetime2" Precision="7" Nullable="false" />
+          <Property Name="SinyalKalitesi" Type="int" />
         </EntityType>
         <EntityType Name="Kullanici">
           <Key>
@@ -70,6 +81,7 @@
           <Property Name="KayitTarihi" Type="datetime2" Precision="7" Nullable="false" />
           <Property Name="Rol" Type="nvarchar" MaxLength="20" Nullable="false" />
           <Property Name="Notlar" Type="nvarchar(max)" />
+          <Property Name="DeneyGrubuID" Type="int" />
         </EntityType>
         <EntityType Name="KullaniciModulYetkisi">
           <Key>
@@ -95,6 +107,7 @@
           <Property Name="Notlar" Type="nvarchar(max)" />
           <Property Name="DeneyTuruID" Type="int" />
           <Property Name="ZamanEtiketiID" Type="int" />
+          <Property Name="OturumTipi" Type="nvarchar" MaxLength="20" />
         </EntityType>
         <EntityType Name="SinavAtama">
           <Key>
@@ -246,6 +259,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Kullanici_DeneyGrubu">
+          <End Role="DeneyGrubu" Type="Self.DeneyGrubu" Multiplicity="0..1" />
+          <End Role="Kullanici" Type="Self.Kullanici" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DeneyGrubu">
+              <PropertyRef Name="DeneyGrubuID" />
+            </Principal>
+            <Dependent Role="Kullanici">
+              <PropertyRef Name="DeneyGrubuID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Oturum_DeneyTuru">
           <End Role="DeneyTuru" Type="Self.DeneyTuru" Multiplicity="0..1" />
           <End Role="Oturum" Type="Self.Oturum" Multiplicity="*" />
@@ -349,6 +374,7 @@
         <EntityContainer Name="eegDBModelStoreContainer">
           <EntitySet Name="AnalizSonucu" EntityType="Self.AnalizSonucu" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="AuditLog" EntityType="Self.AuditLog" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="DeneyGrubu" EntityType="Self.DeneyGrubu" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="DeneyTuru" EntityType="Self.DeneyTuru" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="EEGVerisi" EntityType="Self.EEGVerisi" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Kullanici" EntityType="Self.Kullanici" Schema="dbo" store:Type="Tables" />
@@ -378,6 +404,10 @@
           <AssociationSet Name="FK_EEG_Oturum" Association="Self.FK_EEG_Oturum">
             <End Role="Oturum" EntitySet="Oturum" />
             <End Role="EEGVerisi" EntitySet="EEGVerisi" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Kullanici_DeneyGrubu" Association="Self.FK_Kullanici_DeneyGrubu">
+            <End Role="DeneyGrubu" EntitySet="DeneyGrubu" />
+            <End Role="Kullanici" EntitySet="Kullanici" />
           </AssociationSet>
           <AssociationSet Name="FK_Oturum_DeneyTuru" Association="Self.FK_Oturum_DeneyTuru">
             <End Role="DeneyTuru" EntitySet="DeneyTuru" />
@@ -450,6 +480,7 @@
           <Property Name="KayitZamani" Type="DateTime" Nullable="false" Precision="7" />
           <NavigationProperty Name="Kullanici" Relationship="Self.FK_EEG_Kullanici" FromRole="EEGVerisi" ToRole="Kullanici" />
           <NavigationProperty Name="Oturum" Relationship="Self.FK_EEG_Oturum" FromRole="EEGVerisi" ToRole="Oturum" />
+          <Property Name="SinyalKalitesi" Type="Int32" />
         </EntityType>
         <EntityType Name="Kullanici">
           <Key>
@@ -467,6 +498,8 @@
           <NavigationProperty Name="KullaniciModulYetkisi" Relationship="eegDBModel.FK__Kullanici__Kulla__66603565" FromRole="Kullanici" ToRole="KullaniciModulYetkisi" />
           <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavAtama_Kullanici" FromRole="Kullanici" ToRole="SinavAtama" />
           <NavigationProperty Name="SinavAtama1" Relationship="eegDBModel.FK_SinavAtama_Yonetici" FromRole="Kullanici" ToRole="SinavAtama" />
+          <Property Name="DeneyGrubuID" Type="Int32" />
+          <NavigationProperty Name="DeneyGrubu" Relationship="eegDBModel.FK_Kullanici_DeneyGrubu" FromRole="Kullanici" ToRole="DeneyGrubu" />
         </EntityType>
         <EntityType Name="Oturum">
           <Key>
@@ -488,6 +521,7 @@
           <NavigationProperty Name="DeneyTuru1" Relationship="eegDBModel.FK_Oturum_DeneyTuru" FromRole="Oturum" ToRole="DeneyTuru" />
           <NavigationProperty Name="ZamanEtiketi1" Relationship="eegDBModel.FK_Oturum_ZamanEtiketi" FromRole="Oturum" ToRole="ZamanEtiketi" />
           <NavigationProperty Name="SinavAtama" Relationship="eegDBModel.FK_SinavAtama_Oturum" FromRole="Oturum" ToRole="SinavAtama" />
+          <Property Name="OturumTipi" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="Yonetici">
           <Key>
@@ -619,6 +653,11 @@
           <AssociationSet Name="FK_SinavAtama_Oturum" Association="eegDBModel.FK_SinavAtama_Oturum">
             <End Role="Oturum" EntitySet="Oturum" />
             <End Role="SinavAtama" EntitySet="SinavAtama" />
+          </AssociationSet>
+          <EntitySet Name="DeneyGrubu" EntityType="eegDBModel.DeneyGrubu" />
+          <AssociationSet Name="FK_Kullanici_DeneyGrubu" Association="eegDBModel.FK_Kullanici_DeneyGrubu">
+            <End Role="DeneyGrubu" EntitySet="DeneyGrubu" />
+            <End Role="Kullanici" EntitySet="Kullanici" />
           </AssociationSet>
         </EntityContainer>
         <EntityType Name="AuditLog">
@@ -849,6 +888,29 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="DeneyGrubu">
+          <Key>
+            <PropertyRef Name="DeneyGrubuID" />
+          </Key>
+          <Property Name="DeneyGrubuID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="GrupAdi" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="Aciklama" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Aktif" Type="Boolean" Nullable="false" />
+          <Property Name="EklenmeTarihi" Type="DateTime" Nullable="false" Precision="3" />
+          <NavigationProperty Name="Kullanici" Relationship="eegDBModel.FK_Kullanici_DeneyGrubu" FromRole="DeneyGrubu" ToRole="Kullanici" />
+        </EntityType>
+        <Association Name="FK_Kullanici_DeneyGrubu">
+          <End Type="eegDBModel.DeneyGrubu" Role="DeneyGrubu" Multiplicity="0..1" />
+          <End Type="eegDBModel.Kullanici" Role="Kullanici" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DeneyGrubu">
+              <PropertyRef Name="DeneyGrubuID" />
+            </Principal>
+            <Dependent Role="Kullanici">
+              <PropertyRef Name="DeneyGrubuID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -873,6 +935,7 @@
           <EntitySetMapping Name="EEGVerisi">
             <EntityTypeMapping TypeName="eegDBModel.EEGVerisi">
               <MappingFragment StoreEntitySet="EEGVerisi">
+                <ScalarProperty Name="SinyalKalitesi" ColumnName="SinyalKalitesi" />
                 <ScalarProperty Name="EEGID" ColumnName="EEGID" />
                 <ScalarProperty Name="OturumID" ColumnName="OturumID" />
                 <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
@@ -892,6 +955,7 @@
           <EntitySetMapping Name="Kullanici">
             <EntityTypeMapping TypeName="eegDBModel.Kullanici">
               <MappingFragment StoreEntitySet="Kullanici">
+                <ScalarProperty Name="DeneyGrubuID" ColumnName="DeneyGrubuID" />
                 <ScalarProperty Name="Notlar" ColumnName="Notlar" />
                 <ScalarProperty Name="KullaniciID" ColumnName="KullaniciID" />
                 <ScalarProperty Name="AdSoyad" ColumnName="AdSoyad" />
@@ -905,6 +969,7 @@
           <EntitySetMapping Name="Oturum">
             <EntityTypeMapping TypeName="eegDBModel.Oturum">
               <MappingFragment StoreEntitySet="Oturum">
+                <ScalarProperty Name="OturumTipi" ColumnName="OturumTipi" />
                 <ScalarProperty Name="ZamanEtiketiID" ColumnName="ZamanEtiketiID" />
                 <ScalarProperty Name="DeneyTuruID" ColumnName="DeneyTuruID" />
                 <ScalarProperty Name="OturumID" ColumnName="OturumID" />
@@ -1039,6 +1104,17 @@
                 <ScalarProperty Name="SoruNo" ColumnName="SoruNo" />
                 <ScalarProperty Name="SinavSonucuID" ColumnName="SinavSonucuID" />
                 <ScalarProperty Name="CevapID" ColumnName="CevapID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="DeneyGrubu">
+            <EntityTypeMapping TypeName="eegDBModel.DeneyGrubu">
+              <MappingFragment StoreEntitySet="DeneyGrubu">
+                <ScalarProperty Name="EklenmeTarihi" ColumnName="EklenmeTarihi" />
+                <ScalarProperty Name="Aktif" ColumnName="Aktif" />
+                <ScalarProperty Name="Aciklama" ColumnName="Aciklama" />
+                <ScalarProperty Name="GrupAdi" ColumnName="GrupAdi" />
+                <ScalarProperty Name="DeneyGrubuID" ColumnName="DeneyGrubuID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

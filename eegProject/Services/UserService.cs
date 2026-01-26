@@ -32,7 +32,7 @@ namespace eegProject.Services
             }
         }
 
-        public async Task<Kullanici> CreateAsync(string adSoyad, string email, string passwordHash, string role)
+        public async Task<Kullanici> CreateAsync(string adSoyad, string email, string passwordHash, string role, int? deneyGrubuId = null)
         {
             if (string.IsNullOrWhiteSpace(adSoyad))
             {
@@ -58,7 +58,8 @@ namespace eegProject.Services
                     Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim(),
                     SifreHash = passwordHash,
                     KayitTarihi = now,
-                    Rol = role.Trim()
+                    Rol = role.Trim(),
+                    DeneyGrubuID = deneyGrubuId
                 };
 
                 context.Kullanici.Add(user);
@@ -67,7 +68,7 @@ namespace eegProject.Services
             }
         }
 
-        public async Task UpdateAsync(int userId, string adSoyad, string email, string role)
+        public async Task UpdateAsync(int userId, string adSoyad, string email, string role, int? deneyGrubuId = null)
         {
             if (userId <= 0)
             {
@@ -89,6 +90,7 @@ namespace eegProject.Services
 
                 user.Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
                 user.Rol = string.IsNullOrWhiteSpace(role) ? user.Rol : role.Trim();
+                user.DeneyGrubuID = deneyGrubuId;
 
                 await context.SaveChangesAsync();
             }

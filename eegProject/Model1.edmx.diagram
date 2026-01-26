@@ -30,6 +30,8 @@
         <AssociationConnector Association="eegDBModel.FK_SinavSonucu_SinavAtama" />
         <AssociationConnector Association="eegDBModel.FK_SinavCevap_SinavSonucu" />
         <AssociationConnector Association="eegDBModel.FK_SinavAtama_Oturum" />
+        <EntityTypeShape EntityType="eegDBModel.DeneyGrubu" Width="1.5" PointX="0.75" PointY="0.75" />
+        <AssociationConnector Association="eegDBModel.FK_Kullanici_DeneyGrubu" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

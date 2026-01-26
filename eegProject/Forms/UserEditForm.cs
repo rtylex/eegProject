@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using eegProject.Services;
 
 namespace eegProject.Forms
 {
@@ -10,14 +12,18 @@ namespace eegProject.Forms
         private readonly TextBox _txtName;
         private readonly TextBox _txtEmail;
         private readonly ComboBox _cmbRole;
+        private readonly ComboBox _cmbDeneyGrubu;
         private readonly TextBox _txtPassword;
         private readonly TextBox _txtPasswordConfirm;
         private readonly bool _requirePassword;
+        private readonly DeneyGrubuService _deneyGrubuService = new DeneyGrubuService();
+        private List<DeneyGrubu> _deneyGruplari = new List<DeneyGrubu>();
 
         public string UserName => _txtName.Text.Trim();
         public string Email => string.IsNullOrWhiteSpace(_txtEmail.Text) ? null : _txtEmail.Text.Trim();
         public string Role => string.IsNullOrWhiteSpace(_cmbRole.SelectedItem?.ToString()) ? "Kullanici" : _cmbRole.SelectedItem.ToString();
         public string Password => _txtPassword.Text;
+        public int? SelectedDeneyGrubuId => (_cmbDeneyGrubu.SelectedItem as DeneyGrubuItem)?.Id;
 
         public UserEditForm(string title, bool requirePassword, string[] roleOptions = null, Kullanici existingUser = null)
         {
@@ -27,7 +33,7 @@ namespace eegProject.Forms
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            ClientSize = new Size(420, 300);
+            ClientSize = new Size(420, 340);
 
             roleOptions = roleOptions?.Length > 0 ? roleOptions : new[] { "Kullanici", "Admin" };
 
@@ -35,7 +41,7 @@ namespace eegProject.Forms
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 5,
+                RowCount = 6,
                 Padding = new Padding(12),
                 AutoSize = false
             };
@@ -43,9 +49,9 @@ namespace eegProject.Forms
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
             layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
 
-            for (var i = 0; i < 5; i++)
+            for (var i = 0; i < 6; i++)
             {
-                layout.RowStyles.Add(new RowStyle(SizeType.Absolute, i == 4 ? 60 : 40));
+                layout.RowStyles.Add(new RowStyle(SizeType.Absolute, i == 5 ? 60 : 40));
             }
 
             var lblName = new Label { Text = "Ad Soyad", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
@@ -57,6 +63,9 @@ namespace eegProject.Forms
             var lblRole = new Label { Text = "Rol", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
             _cmbRole = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbRole.Items.AddRange(roleOptions.Cast<object>().ToArray());
+
+            var lblDeneyGrubu = new Label { Text = "Deney Grubu", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
+            _cmbDeneyGrubu = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
 
             var lblPassword = new Label { Text = requirePassword ? "Parola" : "Parola (opsiyonel)", TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
             _txtPassword = new TextBox { Dock = DockStyle.Fill, UseSystemPasswordChar = true };
@@ -73,11 +82,14 @@ namespace eegProject.Forms
             layout.Controls.Add(lblRole, 0, 2);
             layout.Controls.Add(_cmbRole, 1, 2);
 
-            layout.Controls.Add(lblPassword, 0, 3);
-            layout.Controls.Add(_txtPassword, 1, 3);
+            layout.Controls.Add(lblDeneyGrubu, 0, 3);
+            layout.Controls.Add(_cmbDeneyGrubu, 1, 3);
 
-            layout.Controls.Add(lblPasswordConfirm, 0, 4);
-            layout.Controls.Add(_txtPasswordConfirm, 1, 4);
+            layout.Controls.Add(lblPassword, 0, 4);
+            layout.Controls.Add(_txtPassword, 1, 4);
+
+            layout.Controls.Add(lblPasswordConfirm, 0, 5);
+            layout.Controls.Add(_txtPasswordConfirm, 1, 5);
 
             var panelButtons = new FlowLayoutPanel
             {
@@ -119,6 +131,9 @@ namespace eegProject.Forms
             {
                 _cmbRole.SelectedIndex = 0;
             }
+
+            // Deney gruplarını yükle
+            Load += async (s, args) => await LoadDeneyGruplariAsync(existingUser?.DeneyGrubuID);
 
             if (!_requirePassword)
             {
@@ -167,6 +182,40 @@ namespace eegProject.Forms
             }
 
             return true;
+        }
+
+        private async System.Threading.Tasks.Task LoadDeneyGruplariAsync(int? selectedId)
+        {
+            try
+            {
+                _deneyGruplari = await _deneyGrubuService.GetActiveAsync();
+                var items = new List<DeneyGrubuItem> { new DeneyGrubuItem { Id = null, Name = "(Atanmamis)" } };
+                items.AddRange(_deneyGruplari.Select(g => new DeneyGrubuItem { Id = g.DeneyGrubuID, Name = g.GrupAdi }));
+                
+                _cmbDeneyGrubu.DataSource = items;
+                _cmbDeneyGrubu.DisplayMember = "Name";
+                _cmbDeneyGrubu.ValueMember = "Id";
+
+                if (selectedId.HasValue)
+                {
+                    var match = items.FirstOrDefault(i => i.Id == selectedId.Value);
+                    if (match != null)
+                    {
+                        _cmbDeneyGrubu.SelectedItem = match;
+                    }
+                }
+            }
+            catch
+            {
+                // Hata durumunda boş bırak
+            }
+        }
+
+        private sealed class DeneyGrubuItem
+        {
+            public int? Id { get; set; }
+            public string Name { get; set; }
+            public override string ToString() => Name;
         }
 
         private void InitializeComponent()
