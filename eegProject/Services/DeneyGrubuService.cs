@@ -318,5 +318,53 @@ namespace eegProject.Services
                     .ToListAsync();
             }
         }
+
+        /// <summary>
+        /// Belirli bir gruptaki tüm sınav sonuçlarını getirir (grup karşılaştırma için)
+        /// </summary>
+        public async Task<GroupExamStats> GetExamStatsByGroupAsync(int grupId)
+        {
+            if (grupId <= 0)
+            {
+                return new GroupExamStats();
+            }
+
+            using (var context = DbContextFactory.Create())
+            {
+                var sonuclar = await context.SinavSonucu
+                    .Where(ss => ss.Oturum.Kullanici.DeneyGrubuID == grupId)
+                    .ToListAsync();
+
+                if (sonuclar.Count == 0)
+                {
+                    return new GroupExamStats { SinavSayisi = 0 };
+                }
+
+                return new GroupExamStats
+                {
+                    SinavSayisi = sonuclar.Count,
+                    OrtalamaBasariYuzdesi = sonuclar.Where(s => s.BasariYuzdesi.HasValue).Select(s => s.BasariYuzdesi.Value).DefaultIfEmpty(0).Average(),
+                    ToplamDogruSayisi = sonuclar.Sum(s => s.DogruSayisi),
+                    ToplamYanlisSayisi = sonuclar.Sum(s => s.YanlisSayisi),
+                    OrtalamaCevapSuresi = sonuclar.Where(s => s.OrtalamaCevapSuresi.HasValue).Select(s => s.OrtalamaCevapSuresi.Value).DefaultIfEmpty(0).Average(),
+                    ToplamSoruSayisi = sonuclar.Sum(s => s.ToplamSoru),
+                    OrtalamaAlinanPuan = sonuclar.Where(s => s.AlinanPuan.HasValue).Select(s => s.AlinanPuan.Value).DefaultIfEmpty(0).Average()
+                };
+            }
+        }
+    }
+
+    /// <summary>
+    /// Grup bazlı sınav istatistikleri
+    /// </summary>
+    public class GroupExamStats
+    {
+        public int SinavSayisi { get; set; }
+        public double OrtalamaBasariYuzdesi { get; set; }
+        public int ToplamDogruSayisi { get; set; }
+        public int ToplamYanlisSayisi { get; set; }
+        public double OrtalamaCevapSuresi { get; set; }
+        public int ToplamSoruSayisi { get; set; }
+        public double OrtalamaAlinanPuan { get; set; }
     }
 }

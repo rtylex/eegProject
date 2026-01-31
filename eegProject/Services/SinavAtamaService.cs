@@ -262,5 +262,68 @@ namespace eegProject.Services
                     .ToListAsync();
             }
         }
+
+        /// <summary>
+        /// Deney grubundaki tüm kullanıcılara toplu sınav atar
+        /// </summary>
+        public async Task<int> CreateForGroupAsync(
+            int grupId,
+            string sinavAdi,
+            string sinavAciklama,
+            string sinavJsonPath,
+            string sinavJsonContent,
+            int atayanYoneticiId,
+            string notlar = null)
+        {
+            using (var context = DbContextFactory.Create())
+            {
+                // Gruptaki tüm aktif kullanıcıları bul
+                var kullanicilar = await context.Kullanici
+                    .Where(k => k.DeneyGrubuID == grupId)
+                    .ToListAsync();
+
+                if (kullanicilar.Count == 0)
+                {
+                    return 0;
+                }
+
+                int atamaCount = 0;
+                foreach (var kullanici in kullanicilar)
+                {
+                    // Aynı sınav zaten atanmış mı kontrol et
+                    var mevcutAtama = await context.SinavAtama
+                        .FirstOrDefaultAsync(a => a.KullaniciID == kullanici.KullaniciID 
+                            && a.SinavAdi == sinavAdi 
+                            && !a.TamamlandiMi);
+
+                    if (mevcutAtama != null)
+                    {
+                        // Zaten atanmış, atla
+                        continue;
+                    }
+
+                    var atama = new SinavAtama
+                    {
+                        KullaniciID = kullanici.KullaniciID,
+                        OturumID = null, // Genel atama
+                        SinavAdi = sinavAdi,
+                        SinavAciklama = sinavAciklama,
+                        SinavJsonPath = sinavJsonPath,
+                        SinavJsonContent = sinavJsonContent,
+                        AtayanYoneticiID = atayanYoneticiId,
+                        AtamaTarihi = DateTime.UtcNow,
+                        SonGecerlilikTarihi = null,
+                        TamamlandiMi = false,
+                        Notlar = notlar
+                    };
+
+                    context.SinavAtama.Add(atama);
+                    atamaCount++;
+                }
+
+                await context.SaveChangesAsync();
+                return atamaCount;
+            }
+        }
     }
 }

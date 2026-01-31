@@ -25,6 +25,7 @@ namespace eegProject.Forms
         private ComboBox _cmbGrup2;
         private RadioButton _rbRawComparison;
         private RadioButton _rbNormalizedComparison;
+        private CheckBox _chkIncludeExamResults;
         private Button _btnCompare;
         private TextBox _txtResults;
         private Label _lblStatus;
@@ -56,7 +57,7 @@ namespace eegProject.Forms
                 Padding = new Padding(12)
             };
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 120)); // Grup seçimi
-            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));  // Karşılaştırma tipi
+            mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 130)); // Karşılaştırma tipi (increased for checkbox)
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); // Sonuçlar
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 50));  // Durum
 
@@ -111,6 +112,16 @@ namespace eegProject.Forms
                 AutoSize = true
             };
 
+            _chkIncludeExamResults = new CheckBox
+            {
+                Text = "📝 Sınav Sonuçlarını Dahil Et (Opsiyonel)",
+                AutoSize = true,
+                Checked = false,
+                Margin = new Padding(0, 8, 0, 0),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.DarkBlue
+            };
+
             _btnCompare = new Button
             {
                 Text = "Karşılaştır",
@@ -121,6 +132,7 @@ namespace eegProject.Forms
 
             tipLayout.Controls.Add(_rbRawComparison);
             tipLayout.Controls.Add(_rbNormalizedComparison);
+            tipLayout.Controls.Add(_chkIncludeExamResults);
             tipLayout.Controls.Add(_btnCompare);
             tipPanel.Controls.Add(tipLayout);
 
@@ -264,6 +276,59 @@ namespace eegProject.Forms
             sb.AppendLine("═══════════════════════════════════════════════════════════════");
             sb.AppendLine();
             sb.AppendLine(result.Summary);
+
+            // Sınav sonuçlarını dahil et (opsiyonel)
+            if (_chkIncludeExamResults.Checked)
+            {
+                sb.AppendLine();
+                sb.AppendLine("───────────────────────────────────────────────────────────────");
+                sb.AppendLine("📝 SINAV SONUÇLARI KARŞILAŞTIRMASI:");
+                sb.AppendLine("───────────────────────────────────────────────────────────────");
+                
+                var grup1Id = (int)_cmbGrup1.SelectedValue;
+                var grup2Id = (int)_cmbGrup2.SelectedValue;
+                
+                var exam1 = await _deneyGrubuService.GetExamStatsByGroupAsync(grup1Id);
+                var exam2 = await _deneyGrubuService.GetExamStatsByGroupAsync(grup2Id);
+                
+                if (exam1.SinavSayisi == 0 && exam2.SinavSayisi == 0)
+                {
+                    sb.AppendLine("  ⚠️ Her iki grupta da sınav verisi bulunamadı.");
+                }
+                else
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"                              {grup1Name,-20} {grup2Name,-20} Fark");
+                    sb.AppendLine($"  Sınav Sayısı                {exam1.SinavSayisi,-20} {exam2.SinavSayisi,-20}");
+                    sb.AppendLine($"  Ortalama Başarı (%)         {exam1.OrtalamaBasariYuzdesi:F1}%{"",-17} {exam2.OrtalamaBasariYuzdesi:F1}%{"",-17} {exam1.OrtalamaBasariYuzdesi - exam2.OrtalamaBasariYuzdesi:+0.0;-0.0}%");
+                    sb.AppendLine($"  Toplam Doğru/Yanlış         {exam1.ToplamDogruSayisi}/{exam1.ToplamYanlisSayisi,-17} {exam2.ToplamDogruSayisi}/{exam2.ToplamYanlisSayisi,-17}");
+                    sb.AppendLine($"  Ort. Cevap Süresi (sn)      {exam1.OrtalamaCevapSuresi:F1}{"",-18} {exam2.OrtalamaCevapSuresi:F1}{"",-18} {exam1.OrtalamaCevapSuresi - exam2.OrtalamaCevapSuresi:+0.0;-0.0}");
+                    sb.AppendLine($"  Ort. Alınan Puan            {exam1.OrtalamaAlinanPuan:F1}{"",-18} {exam2.OrtalamaAlinanPuan:F1}{"",-18} {exam1.OrtalamaAlinanPuan - exam2.OrtalamaAlinanPuan:+0.0;-0.0}");
+                    
+                    sb.AppendLine();
+                    sb.AppendLine("───────────────────────────────────────────────────────────────");
+                    sb.AppendLine("SINAV PERFORMANS YORUMU:");
+                    sb.AppendLine("───────────────────────────────────────────────────────────────");
+                    
+                    if (exam1.SinavSayisi > 0 && exam2.SinavSayisi > 0)
+                    {
+                        var basariFarki = exam1.OrtalamaBasariYuzdesi - exam2.OrtalamaBasariYuzdesi;
+                        if (Math.Abs(basariFarki) > 5)
+                        {
+                            var betterGroup = basariFarki > 0 ? grup1Name : grup2Name;
+                            sb.AppendLine($"  • {betterGroup} grubunda daha yüksek sınav başarısı gözlemlendi (Fark: {Math.Abs(basariFarki):F1}%).");
+                        }
+                        
+                        var sureFarki = exam1.OrtalamaCevapSuresi - exam2.OrtalamaCevapSuresi;
+                        if (Math.Abs(sureFarki) > 2)
+                        {
+                            var fasterGroup = sureFarki < 0 ? grup1Name : grup2Name;
+                            sb.AppendLine($"  • {fasterGroup} grubunda daha hızlı cevap süresi gözlemlendi.");
+                        }
+                    }
+                }
+            }
+
             sb.AppendLine();
             sb.AppendLine("───────────────────────────────────────────────────────────────");
             sb.AppendLine("DETAYLI METRİKLER (JSON):");
@@ -393,6 +458,56 @@ namespace eegProject.Forms
                 sb.AppendLine("  en az bir kullanıcının hem 'Bazal' hem de 'Gorev' oturumu olmalı.");
                 sb.AppendLine();
                 sb.AppendLine("  İpucu: Oturum düzenlerken 'Oturum Tipi' alanını doldurun.");
+            }
+
+            // Sınav sonuçlarını dahil et (opsiyonel)
+            if (_chkIncludeExamResults.Checked)
+            {
+                sb.AppendLine();
+                sb.AppendLine("───────────────────────────────────────────────────────────────");
+                sb.AppendLine("📝 SINAV SONUÇLARI KARŞILAŞTIRMASI:");
+                sb.AppendLine("───────────────────────────────────────────────────────────────");
+                
+                var grup1Id = (int)_cmbGrup1.SelectedValue;
+                var grup2Id = (int)_cmbGrup2.SelectedValue;
+                
+                var exam1 = await _deneyGrubuService.GetExamStatsByGroupAsync(grup1Id);
+                var exam2 = await _deneyGrubuService.GetExamStatsByGroupAsync(grup2Id);
+                
+                if (exam1.SinavSayisi == 0 && exam2.SinavSayisi == 0)
+                {
+                    sb.AppendLine("  ⚠️ Her iki grupta da sınav verisi bulunamadı.");
+                }
+                else
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"                              {grup1Name,-20} {grup2Name,-20} Fark");
+                    sb.AppendLine($"  Sınav Sayısı                {exam1.SinavSayisi,-20} {exam2.SinavSayisi,-20}");
+                    sb.AppendLine($"  Ortalama Başarı (%)         {exam1.OrtalamaBasariYuzdesi:F1}%{"",-17} {exam2.OrtalamaBasariYuzdesi:F1}%{"",-17} {exam1.OrtalamaBasariYuzdesi - exam2.OrtalamaBasariYuzdesi:+0.0;-0.0}%");
+                    sb.AppendLine($"  Toplam Doğru/Yanlış         {exam1.ToplamDogruSayisi}/{exam1.ToplamYanlisSayisi,-17} {exam2.ToplamDogruSayisi}/{exam2.ToplamYanlisSayisi,-17}");
+                    sb.AppendLine($"  Ort. Cevap Süresi (sn)      {exam1.OrtalamaCevapSuresi:F1}{"",-18} {exam2.OrtalamaCevapSuresi:F1}{"",-18} {exam1.OrtalamaCevapSuresi - exam2.OrtalamaCevapSuresi:+0.0;-0.0}");
+                    sb.AppendLine($"  Ort. Alınan Puan            {exam1.OrtalamaAlinanPuan:F1}{"",-18} {exam2.OrtalamaAlinanPuan:F1}{"",-18} {exam1.OrtalamaAlinanPuan - exam2.OrtalamaAlinanPuan:+0.0;-0.0}");
+                    
+                    sb.AppendLine();
+                    sb.AppendLine("SINAV PERFORMANS YORUMU:");
+                    
+                    if (exam1.SinavSayisi > 0 && exam2.SinavSayisi > 0)
+                    {
+                        var basariFarki = exam1.OrtalamaBasariYuzdesi - exam2.OrtalamaBasariYuzdesi;
+                        if (Math.Abs(basariFarki) > 5)
+                        {
+                            var betterGroup = basariFarki > 0 ? grup1Name : grup2Name;
+                            sb.AppendLine($"  • {betterGroup} grubunda daha yüksek sınav başarısı gözlemlendi (Fark: {Math.Abs(basariFarki):F1}%).");
+                        }
+                        
+                        var sureFarki = exam1.OrtalamaCevapSuresi - exam2.OrtalamaCevapSuresi;
+                        if (Math.Abs(sureFarki) > 2)
+                        {
+                            var fasterGroup = sureFarki < 0 ? grup1Name : grup2Name;
+                            sb.AppendLine($"  • {fasterGroup} grubunda daha hızlı cevap süresi gözlemlendi.");
+                        }
+                    }
+                }
             }
 
             _txtResults.Text = sb.ToString();

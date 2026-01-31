@@ -2699,7 +2699,7 @@ namespace eegProject
                     Left = 20,
                     Top = currentTop,
                     Width = 800,
-                    Height = 100,
+                    Height = 150,
                     BorderStyle = BorderStyle.FixedSingle,
                     BackColor = System.Drawing.Color.LightYellow
                 };
@@ -2763,11 +2763,25 @@ namespace eegProject
                 };
                 btnSinavSonucRaporu.Click += BtnSinavSonucRaporu_Click;
 
+                var btnGrupaSinavAta = new Button
+                {
+                    Name = "btnGrupaSinavAta",
+                    Text = "👥 Gruba Toplu Sınav Ata",
+                    Left = 10,
+                    Top = 105,
+                    Width = 220,
+                    Height = 35,
+                    BackColor = System.Drawing.Color.FromArgb(255, 200, 100),
+                    Font = new System.Drawing.Font("Segoe UI", 10, System.Drawing.FontStyle.Bold)
+                };
+                btnGrupaSinavAta.Click += BtnGrupaSinavAta_Click;
+
                 pnlYonetici.Controls.Add(lblYonetici);
                 pnlYonetici.Controls.Add(lblBilgi);
                 pnlYonetici.Controls.Add(btnSinavAtaOturum);
                 pnlYonetici.Controls.Add(btnAtamalariGor);
                 pnlYonetici.Controls.Add(btnSinavSonucRaporu);
+                pnlYonetici.Controls.Add(btnGrupaSinavAta);
 
                 tabPageSinav.Controls.Add(pnlYonetici);
                 
@@ -2981,6 +2995,25 @@ namespace eegProject
             {
                 MessageBox.Show(this,
                     $"Sınav sonuç raporu açılırken hata oluştu:\n{ex.Message}",
+                    "Hata",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnGrupaSinavAta_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using (var form = new Forms.GrupSinavAtamaForm(_currentUserId))
+                {
+                    form.ShowDialog(this);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    $"Grup sınav atama formu açılırken hata oluştu:\n{ex.Message}",
                     "Hata",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
